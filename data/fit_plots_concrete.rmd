@@ -1,0 +1,183 @@
+---
+title: "DSN 2019 Cross Sections"
+author: "Daniel"
+date: "April 04, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading data and libraries
+
+Load ggplot2 for plotting data and the CSV file with all data. We also correct the cross section of thermals since the rotax spectrum is different, which means we should correct the fluence we had before by a factor of (4.96/2.71). Thus, we divide the cross section by this factor since the cross section is (number of errors)/(fluence).
+
+```{r}
+library(ggplot2)
+library(reshape2)
+
+dat = read.csv("data_formatted.csv",sep=",")
+
+dat$cross_section_SDC_thermals = dat$cross_section_SDC_thermals / (4.96/2.71)
+
+summary(dat)
+```
+
+
+## Normalize SDC and DUE Cross Sections
+
+Find the minimum value for each device and normalize SDC and DUE cross sections. Then, append the values normalize to a new data frame called "datNormalized"
+
+```{r}
+datNormalized = dat
+for (board in unique(dat$Device)) {
+  # Get all cross section values for one device
+  tmp_values = c(subset(dat,dat$Device==board)$cross_section_SDC_high, subset(dat,dat$Device==board)$cross_section_DUE_high, subset(dat,dat$Device==board)$cross_section_SDC_thermals, subset(dat,dat$Device==board)$cross_section_DUE_thermals)
+  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+  print(paste("Device: ", board, "; Minimum: ",tmp_min))
+  
+  # Normalize all date from one device to the minimum value found
+  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+}
+
+```
+
+## Calculate the average cross section per device
+
+```{r}
+dat_mean = aggregate(datNormalized[, c('cross_section_SDC_high', 'cross_section_DUE_high', 'cross_section_SDC_thermals', 'cross_section_DUE_thermals')], list(datNormalized$Device), mean, na.rm=TRUE,na.action = na.omit)
+#dat_mean
+```
+
+
+## Compute FIT rate for each device as we increase wall thickness and attenuate the flux
+
+```{r}
+FIT_by_thickness <- function(df){
+  attenuation_length_high_energy=0.37 #JEDEC data
+  attenuation_length_thermals=0.65 #JEDEC data
+  initial_high_flux = 13 
+  initial_thermal_flux = 4
+  initial_thunderstorm_flux = 8
+
+  datFIT = data.frame(matrix(ncol = 7, nrow = 0))
+  colnames(datFIT) = c('Thickness', 'SDC_FIT_high', 'DUE_FIT_high', 'SDC_FIT_thermal', 'DUE_FIT_thermal', 'SDC_FIT_thunderstom', 'DUE_FIT_thunderstom')
+  row=1
+  for (i in seq(from=0.0, to=2, by=0.01)) {
+    datFIT[row,'Thickness'] = i
+    high_flux = initial_high_flux*exp(-i/attenuation_length_high_energy)
+    thermal_flux = initial_thermal_flux*exp(-i/attenuation_length_thermals)
+    thunderstorm_flux = initial_thunderstorm_flux*exp(-i/attenuation_length_thermals)
+    #dat[row,'High_Energy_Attenuation'] = dat[row,'Neutron_Flux']/initial_flux
+    #dat[row,'Thermal_Attenuation'] = dat[row,'Thermal_Neutron_Flux']/initial_flux
+    
+    datFIT[row,'SDC_FIT_high'] = df$cross_section_SDC_high * high_flux
+    datFIT[row,'DUE_FIT_high'] = df$cross_section_DUE_high * high_flux
+    datFIT[row,'SDC_FIT_thermal'] = df$cross_section_SDC_thermals * thermal_flux
+    datFIT[row,'DUE_FIT_thermal'] = df$cross_section_DUE_thermals * thermal_flux
+    datFIT[row,'SDC_FIT_thunderstom'] = df$cross_section_SDC_thermals * thunderstorm_flux
+    datFIT[row,'DUE_FIT_thunderstom'] = df$cross_section_DUE_thermals * thunderstorm_flux
+    row = row+1
+  }
+  datFITmelted = melt(datFIT, id.vars = 'Thickness')
+  return(datFITmelted)
+}
+
+plot_fit <- function(df){
+  legendLabels=c("SDC High Energy", "DUE High Energy", "SDC Thermal", "DUE Thermal", "SDC Thunderstrom", "DUE Thunderstrom")
+  plot = ggplot(df, aes(x=Thickness, y=value, color=variable, linetype=variable)) +
+  scale_color_manual(name="Energy", values=c(
+  "#C00000"
+  , "#9DC3E6"
+  , "#C00000"
+  , "#9DC3E6"
+  , "#C00000"
+  , "#9DC3E6"
+  ), labels=legendLabels) +
+  scale_linetype_manual(name="Energy", values=c(
+  "solid"
+  , "solid"
+  , "dashed"
+  , "dashed"
+  , "dotdash"
+  , "dotdash"
+  ), labels=legendLabels) +
+  scale_y_log10() +
+  geom_line(size=1.1) +
+  labs(x = "Concrete Thickness (m)", y = "Average FIT Rate [a.u.]") +
+  theme(legend.title = element_blank(), legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  return(plot)
+}
+
+plot_fit_facet <- function(df, ncols=3){
+  legendLabels=c("SDC High Energy", "DUE High Energy", "SDC Thermal", "DUE Thermal", "SDC Thunderstrom", "DUE Thunderstrom")
+  plot = ggplot(df, aes(x=Thickness, y=value, color=variable, linetype=variable)) +
+  facet_wrap(device ~ ., ncol=ncols, scales="free_y") +
+  scale_color_manual(name="Energy", values=c(
+  "#C00000"
+  , "#9DC3E6"
+  , "#C00000"
+  , "#9DC3E6"
+  , "#C00000"
+  , "#9DC3E6"
+  ), labels=legendLabels) +
+  scale_linetype_manual(name="Energy", values=c(
+  "solid"
+  , "solid"
+  , "dotdash"
+  , "dotdash"
+  , "dotted"
+  , "dotted"
+  ), labels=legendLabels) +
+  scale_y_log10() +
+  geom_line(size=1.1) +
+  labs(x = "Concrete Thickness (m)", y = "Average FIT Rate [a.u.]") +
+  theme(legend.title = element_blank(), legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14), legend.key.width=unit(1.1, "cm"))
+  return(plot)
+}
+
+dfPlot <- data.frame()
+dfTX = FIT_by_thickness(dat_mean[dat_mean$Group.1 == 'TitanX',])
+dfTX$device = "TitanX"
+dfPlot = rbind.data.frame(dfPlot, dfTX)
+dfTV = FIT_by_thickness(dat_mean[dat_mean$Group.1 == 'TitanV',])
+dfTV$device = "TitanV"
+dfPlot = rbind.data.frame(dfPlot, dfTV)
+dfK20 = FIT_by_thickness(dat_mean[dat_mean$Group.1 == 'K20',])
+dfK20$device = "K20"
+dfPlot = rbind.data.frame(dfPlot, dfK20)
+#dfC = FIT_by_thickness(dat_mean[dat_mean$Group.1 == 'CPU',])
+#dfC$device = "APU-CPU"
+#dfPlot = rbind.data.frame(dfPlot, dfC)
+dfCG = FIT_by_thickness(dat_mean[dat_mean$Group.1 == 'CPU+GPU',])
+dfCG$device = "CPU+GPU"
+dfPlot = rbind.data.frame(dfPlot, dfCG)
+#dfG = FIT_by_thickness(dat_mean[dat_mean$Group.1 == 'GPUembedded',])
+#dfG$device = "APU-GPU"
+#dfPlot = rbind.data.frame(dfPlot, dfG)
+
+
+#ggsave(plot_fit_facet(dfPlot), file='apus-gpus-concrete.pdf', width = 12, height = 7)
+
+#dfPlot <- data.frame()
+dfXP = FIT_by_thickness(dat_mean[dat_mean$Group.1 == 'XeonPhi',])
+dfXP$device = "XeonPhi"
+dfPlot = rbind.data.frame(dfPlot, dfXP)
+dfF = FIT_by_thickness(dat_mean[dat_mean$Group.1 == 'FPGA',])
+dfF$device = "FPGA"
+dfPlot = rbind.data.frame(dfPlot, dfF)
+dfPlot$device <- factor(dfPlot$device, levels = c("XeonPhi", "CPU+GPU", "FPGA", "K20", "TitanX", "TitanV"))
+
+##ggsave(plot_fit_facet(dfPlot,ncols=1), file='xeon-fpga-concrete.pdf', width = 5, height = 7)
+
+ggsave(plot_fit_facet(dfPlot,ncols=3), file='fit-concrete.pdf', width = 12, height = 7)
+
+```
+
+
+

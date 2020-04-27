@@ -1,0 +1,32 @@
+\section{Introduction}
+\label{sec_introduction}
+
+Reliability is one of the most important considerations
+in the field of High Performance Computing (HPC) ~\cite{toptenexascale, NSF2018, ISO26262}.
+An unreliable system can negatively affect not only the throughput of a computer but also the correctness of operations.
+Reliability can be increased through redundancies in chip architectures, improved manufacturing processes, transistor layout changes, or other hardening solutions~\cite{ziegler2004ser}. However this added reliability comes at an added 
+cost in terms of additional engineering, more expensive manufacturing, and added power consumption. This creates a trade off
+between lower cost and higher reliability such that only specialized safety critical 
+industries, such as aerospace or medical, are willing to pay the additional cost of highly
+reliable parts.
+This is in contrast to Commercial Off-The-Shelf (COTS) devices which are generally not built to the highest achievable levels of reliability due to the low margins of the markets that consume these parts. Most consumers of COTS parts are primarily interested in performance and low price. They are typically willing to suffer lower reliability in exchange~\cite{ziegler2004ser, Baumann2005}.  The majority of the HPC community builds systems out of COTS parts and there is a constant struggle between the   
+drive for ever increasing compute power and the potential of lower
+ scientific productivity due to lower reliability~\cite{snir2014addressing}.
+
+
+In this paper we compare the reliability risk to HPC systems from \textit{high energy} neutrons to that of boron-10 ($^{10}B$), which makes devices vulnerable  to \textit{thermal neutrons} generated from either fast neutrons that have lost energy through multiple interactions~\cite{Baumann2005, ziegler2003} or are emitted from naturally occurring radioactive isotopes. $^{10}B$ has a relatively large capture cross section for thermal neutrons and the resulting excited state of $^{10}B$ quickly decays into Lithium-7 and a 1.47 MeV alpha particle. It is this high energy alpha particle that is known to contribute to upsets in semiconductors. Eliminating boron all-together or using depleted $^{11}B$ would make the device immune to thermal neutrons. However, depleted boron is expensive and boron is necessary for the manufacture of modern semi-conductors, so many COTS devices contain $^{10}B$.  Modern data centers contain large masses of materials that can potentially increase the flux of thermal neutrons, in the form of concrete
+slab floors, cinder block walls, and water cooling units. In order to accurately estimate the effects of thermal neutrons we deployed a neutron detector to measure the natural background rate variation due to materials used in a modern data center. Our initial measurements indicate that these materials  can increase the thermal neutron counts, and thus the COTS device's error rate, by as much as 20\%. 
+
+The details of how  $^{10}B$ is used in modern chips is proprietary and not publicly available. The only way to evaluate boron concentration in a chip, and the associated increased sensitivity to thermal neutrons, is through controlled radiation exposure. We studied the effects of fast and thermal neutrons on modern computing devices executing a representative set of benchmarks.
+%an AMD Accelerated Processing Unit (APU), three NVIDIA GPUs, an Intel accelerator,
+%and a Xilinx Field Programmable Gate Array (FPGA) all executing a set of 8
+%representative benchmarks that includes HPC applications, Convolutional Neural
+%Networks (CNNs) for objects detection, and heterogeneous codes. 
+We show that all the considered devices are vulnerable to thermal neutrons. For some devices, the probability for thermal neutrons to generate an error appears to be higher than the probability due to high energy neutrons.  
+
+The main contributions of this paper are: (1) an experimental evaluation of the probability for a high energy vs. thermal neutron to generate an error in modern computing devices; (2) an estimation of the thermal neutrons flux modification due to materials heavily present in a supercomputer room, based on homemade thermal neutrons detectors; (3) the evaluation, based on (1) and (2), of the contribution of thermal neutrons to the error rate of computing devices. 
+
+
+%The remainder of the paper is organized as follows. Section~\ref{sec_background} serves as a background and reviews previous work.
+%Section~\ref{sec_methodology} describes our evaluation methodologies. Section~\ref{sec_results} quantifies our experimental results, Section~\ref{sec_fit} presents the estimated FIT rates, and Section~\ref{sec_conclusion} concludes the paper.
+

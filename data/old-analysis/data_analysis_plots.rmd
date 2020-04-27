@@ -1,0 +1,861 @@
+---
+title: "DSN 2019"
+author: "Daniel"
+date: "November 17, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading data and libraries
+
+Load ggplot2 for plotting data and the CSV file with all data. We also correct the cross section of thermals since the rotax spectrum is different, which means we should correct the fluence we had before by a factor of (4.96/2.71). Thus, we divide the cross section by this factor since the cross section is (number of errors)/(fluence).
+
+```{r}
+library(ggplot2)
+
+dat = read.csv("data_formatted.csv",sep=",")
+
+dat$cross_section_SDC_thermals = dat$cross_section_SDC_thermals / (4.96/2.71)
+
+summary(dat)
+```
+
+
+## Normalize SDC and DUE Cross Sections
+
+Find the minimum value for each device and normalize SDC and DUE cross sections. Then, append the values normalize to a new data frame called "datNormalized"
+
+```{r}
+datNormalized = dat
+for (board in unique(dat$Device)) {
+  # Get all cross section values for one device
+  tmp_values = c(subset(dat,dat$Device==board)$cross_section_SDC_high, subset(dat,dat$Device==board)$cross_section_DUE_high, subset(dat,dat$Device==board)$cross_section_SDC_thermals, subset(dat,dat$Device==board)$cross_section_DUE_thermals)
+  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+  print(paste("Device: ", board, "; Minimum: ",tmp_min))
+  
+  # Normalize all date from one device to the minimum value found
+  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+}
+```
+
+
+
+
+## Compute FIT for High Energy
+
+Normal flux is 13 neutrons per cm^2 per hour. Since data is normalized, there is no need to multiply by 10^9
+
+```{r}
+datNormalized$FIT_SDC_high = datNormalized$cross_section_SDC_high * 13
+datNormalized$FIT_DUE_high = datNormalized$cross_section_DUE_high * 13
+```
+
+## Compute FIT for Thermals
+
+
+Normal flux is 4 neutrons per cm^2 per hour under normal environments. 
+
+```{r}
+datNormalized$FIT_SDC_thermals = datNormalized$cross_section_SDC_thermals * 4
+datNormalized$FIT_DUE_thermals = datNormalized$cross_section_DUE_thermals * 4
+```
+
+During a thunderstrom the neutron flux is about 8 neutrons
+
+```{r}
+datNormalized$FIT_SDC_thermals_storm = datNormalized$cross_section_SDC_thermals * 8
+datNormalized$FIT_DUE_thermals_storm = datNormalized$cross_section_DUE_thermals * 8
+```
+
+## Compute the error bars
+
+Using the Poisson distribution with 95% confidence, which is  1.96*sqrt(test_mean/#tests)
+
+```{r}
+  datNormalized$cross_section_SDC_high_err = 1.96*sqrt(datNormalized$cross_section_SDC_high/datNormalized$number_SDCs_high)
+  datNormalized$cross_section_DUE_high_err = 1.96*sqrt(datNormalized$cross_section_DUE_high/datNormalized$number_DUE_high)
+
+  datNormalized$cross_section_SDC_thermals_err = 1.96*sqrt(datNormalized$cross_section_SDC_thermals/datNormalized$number_SDCs_thermals)
+  datNormalized$cross_section_DUE_thermals_err = 1.96*sqrt(datNormalized$cross_section_DUE_thermals/datNormalized$number_DUE_thermals)
+  
+  datNormalized$FIT_SDC_high_err = 1.96*sqrt(datNormalized$FIT_SDC_high/datNormalized$number_SDCs_high)
+  datNormalized$FIT_DUE_high_err = 1.96*sqrt(datNormalized$FIT_DUE_high/datNormalized$number_DUE_high)
+
+  datNormalized$FIT_DUE_thermals_err = 1.96*sqrt(datNormalized$FIT_DUE_thermals/datNormalized$number_DUE_thermals)
+  datNormalized$FIT_SDC_thermals_err = 1.96*sqrt(datNormalized$FIT_SDC_thermals/datNormalized$number_SDCs_thermals)
+
+  datNormalized$FIT_SDC_thermals_storm_err = 1.96*sqrt(datNormalized$FIT_SDC_thermals_storm/datNormalized$number_SDCs_thermals)
+  datNormalized$FIT_DUE_thermals_storm_err = 1.96*sqrt(datNormalized$FIT_DUE_thermals_storm/datNormalized$number_DUE_thermals)
+```
+
+
+## Plots
+
+### Cross Sections
+
+#### Function to plot Cross Sections
+
+Melt the data frame to plot two columns for each code and plot them with error bars
+
+```{r}
+library(reshape2)
+
+cs_sdc_plot_errbars <- function(device){
+  datPlot = datNormalized[datNormalized$Device == device, ]
+  
+  dfm1 = melt(datPlot[, c('Code', 'cross_section_SDC_high_err', 'cross_section_SDC_high')], id.vars = c(1, 2))
+  colnames(dfm1) = c("Code", "Error", "Neutron_Type", "Cross_Section")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'cross_section_SDC_thermals_err', 'cross_section_SDC_thermals')], id.vars = c(1, 2))
+  colnames(dfm2) = c("Code", "Error", "Neutron_Type", "Cross_Section")
+  dfm2$Neutron_Type = "Thermals"
+  dfm = rbind(dfm1, dfm2)
+  
+  plot = ggplot(dfm, aes(x=Code, weight=Cross_Section, ymin=Cross_Section-Error, ymax=Cross_Section+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=Cross_Section), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+  labs(x = "", y = "Cross Section SDC [a.u.]", fill="") +
+  theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  filename = paste("./plots/cs_SDC_", device, ".pdf", sep="")
+  ggsave(filename, plot)
+  plot
+}
+
+cs_due_plot_errbars <- function(device){
+  datPlot = datNormalized[datNormalized$Device == device, ]
+  
+  dfm1 = melt(datPlot[, c('Code', 'cross_section_DUE_high_err', 'cross_section_DUE_high')], id.vars = c(1, 2))
+  colnames(dfm1) = c("Code", "Error", "Neutron_Type", "Cross_Section")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'cross_section_DUE_thermals_err', 'cross_section_DUE_thermals')], id.vars = c(1, 2))
+  colnames(dfm2) = c("Code", "Error", "Neutron_Type", "Cross_Section")
+  dfm2$Neutron_Type = "Thermals"
+  dfm = rbind(dfm1, dfm2)
+  
+  plot = ggplot(dfm, aes(x=Code, weight=Cross_Section, ymin=Cross_Section-Error, ymax=Cross_Section+Error, fill=Neutron_Type)) +
+    geom_bar      (position=position_dodge(), aes(y=Cross_Section), stat="identity") +
+    geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    #labs(title = plot_title, x = "", y = "Cross Section DUE [a.u.]", fill="") +
+    labs(x = "", y = "Cross Section DUE [a.u.]", fill="") +
+    theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  #theme(plot.title = element_text(hjust = 0.5), legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  filename = paste("./plots/cs_DUE_", device, ".pdf", sep="")
+  ggsave(filename, plot)
+  plot
+}
+
+```
+
+#### Plot Cross Sections
+
+##### APUs
+SDC
+```{r}
+  datPlot = subset(datNormalized, Device=="CPU" | Device == "GPUembedded" | Device == "CPU+GPU")
+  
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'cross_section_SDC_high_err', 'cross_section_SDC_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "Cross_Section")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'cross_section_SDC_thermals_err', 'cross_section_SDC_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "Cross_Section")
+  dfm2$Neutron_Type = "Thermals"
+  dfm = rbind(dfm1, dfm2)
+  
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("GPUembedded", "AMD\nGPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU", "AMD\nCPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU+GPU", "AMD\nCPU+GPU", x) }))
+  
+  dfm$Device <- factor(dfm$Device, levels = c("AMD\nCPU", "AMD\nGPU", "AMD\nCPU+GPU"))
+  
+  plot = ggplot(dfm, aes(x=Code, weight=Cross_Section, ymin=Cross_Section-Error, ymax=Cross_Section+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=Cross_Section), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(~ Device) +
+  labs(x = "", y = "Cross Section SDC [a.u.]", fill="") +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  #filename = paste("./plots/FIT_SDC_", device, ".pdf", sep="")
+  ggsave("./plots/cs_SDC_APU.pdf", plot, width = 12, height = 7)
+  plot
+```
+
+DUE
+```{r}
+  datPlot = subset(datNormalized, Device=="CPU" | Device == "GPUembedded" | Device == "CPU+GPU")
+  
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'cross_section_DUE_high_err', 'cross_section_DUE_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "Cross_Section")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'cross_section_DUE_thermals_err', 'cross_section_DUE_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "Cross_Section")
+  dfm2$Neutron_Type = "Thermals"
+  dfm = rbind(dfm1, dfm2)
+  
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("GPUembedded", "AMD\nGPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU", "AMD\nCPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU+GPU", "AMD\nCPU+GPU", x) }))
+  
+  dfm$Device <- factor(dfm$Device, levels = c("AMD\nCPU", "AMD\nGPU", "AMD\nCPU+GPU"))
+  
+  plot = ggplot(dfm, aes(x=Code, weight=Cross_Section, ymin=Cross_Section-Error, ymax=Cross_Section+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=Cross_Section), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(~ Device) +
+  labs(x = "", y = "Cross Section DUE [a.u.]", fill="") +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  #filename = paste("./plots/FIT_SDC_", device, ".pdf", sep="")
+  ggsave("./plots/cs_DUE_APU.pdf", plot, width = 12, height = 7)
+  plot
+```
+
+##### NVIDIA
+SDC
+```{r}
+   datPlot = subset(datNormalized, Device=="K20" | Device == "TitanV" | Device == "TitanX")
+
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'cross_section_SDC_high_err', 'cross_section_SDC_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "Cross_Section")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'cross_section_SDC_thermals_err', 'cross_section_SDC_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "Cross_Section")
+  dfm2$Neutron_Type = "Thermals"
+  dfm = rbind(dfm1, dfm2)
+  
+  dfm$Device <- factor(dfm$Device, levels = c("K20", "TitanX", "TitanV"))
+  
+  plot = ggplot(dfm, aes(x=Code, weight=Cross_Section, ymin=Cross_Section-Error, ymax=Cross_Section+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=Cross_Section), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(~ Device) +
+  labs(x = "", y = "Cross Section SDC [a.u.]", fill="") +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  #filename = paste("./plots/FIT_SDC_", device, ".pdf", sep="")
+  ggsave("./plots/cs_SDC_NVIDIA.pdf", plot, width = 12, height = 7)
+  plot
+```
+DUE
+```{r}
+   datPlot = subset(datNormalized, Device=="K20" | Device == "TitanV" | Device == "TitanX")
+
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'cross_section_DUE_high_err', 'cross_section_DUE_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "Cross_Section")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'cross_section_DUE_thermals_err', 'cross_section_DUE_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "Cross_Section")
+  dfm2$Neutron_Type = "Thermals"
+  dfm = rbind(dfm1, dfm2)
+  
+  dfm$Device <- factor(dfm$Device, levels = c("K20", "TitanX", "TitanV"))
+  
+  plot = ggplot(dfm, aes(x=Code, weight=Cross_Section, ymin=Cross_Section-Error, ymax=Cross_Section+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=Cross_Section), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(~ Device) +
+  labs(x = "", y = "Cross Section DUE [a.u.]", fill="") +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  #filename = paste("./plots/FIT_SDC_", device, ".pdf", sep="")
+  ggsave("./plots/cs_DUE_NVIDIA.pdf", plot, width = 12, height = 7)
+  plot
+```
+
+##### Titan X 
+SDC
+```{r}
+cs_sdc_plot_errbars("TitanX")
+```
+
+DUE
+```{r}
+cs_due_plot_errbars("TitanX")
+```
+
+##### Titan V 
+SDC
+```{r}
+cs_sdc_plot_errbars("TitanV")
+```
+
+DUE
+```{r}
+cs_due_plot_errbars("TitanV")
+```
+
+##### K20 
+SDC
+```{r}
+cs_sdc_plot_errbars("K20")
+```
+
+DUE
+```{r}
+cs_due_plot_errbars("K20")
+```
+
+##### Xeon Phi 
+SDC
+```{r}
+cs_sdc_plot_errbars("XeonPhi")
+```
+
+DUE
+```{r}
+cs_due_plot_errbars("XeonPhi")
+```
+
+##### CPU 
+SDC
+```{r}
+cs_sdc_plot_errbars("CPU")
+```
+
+DUE
+```{r}
+cs_due_plot_errbars("CPU")
+```
+
+##### GPU 
+SDC
+```{r}
+cs_sdc_plot_errbars("GPUembedded")
+```
+
+DUE
+```{r}
+cs_due_plot_errbars("GPUembedded")
+```
+
+##### CPU+GPU 
+
+SDC
+```{r}
+cs_sdc_plot_errbars("CPU+GPU")
+```
+
+DUE
+```{r}
+cs_due_plot_errbars("CPU+GPU")
+```
+
+##### FPGA
+
+SDC
+```{r}
+cs_sdc_plot_errbars("FPGA")
+```
+
+There is no DUE for FPGAs
+
+### Cross Section Ratio
+
+The idea is to show the difference between the cross sections of high energy and thermals in a more "easy to compare" way. Thus, we will divide the larger one by the smaller one to show the magnitude of the difference.
+
+First we compute the ration and save into a new column the ratio and another one which neutron type (High Energy or Thermals) is the larger one.
+```{r}
+datNormalized$ratioSDC = ifelse(datNormalized$cross_section_SDC_high >= datNormalized$cross_section_SDC_thermals, datNormalized$cross_section_SDC_high/datNormalized$cross_section_SDC_thermals, -datNormalized$cross_section_SDC_thermals/datNormalized$cross_section_SDC_high)
+datNormalized$moreSensitiveSDC = ifelse(datNormalized$cross_section_SDC_high >= datNormalized$cross_section_SDC_thermals, "High Energy", "Thermals")
+
+datNormalized$ratioDUE = ifelse(datNormalized$cross_section_DUE_high >= datNormalized$cross_section_DUE_thermals, datNormalized$cross_section_DUE_high/datNormalized$cross_section_DUE_thermals, -datNormalized$cross_section_DUE_thermals/datNormalized$cross_section_DUE_high)
+datNormalized$moreSensitiveDUE = ifelse(datNormalized$cross_section_DUE_high >= datNormalized$cross_section_DUE_thermals, "High Energy", "Thermals")
+
+datNormalized$ratioDUE = ifelse(datNormalized$cross_section_DUE_high == 0 | datNormalized$cross_section_DUE_thermals == 0, 0, datNormalized$ratioDUE)
+
+```
+
+Now the functions to plot the data
+
+```{r}
+cs_sdc_ratio <- function(device){
+  plot = ggplot(datNormalized[datNormalized$Device == device, ], aes(x=Code, y=ratioSDC, fill=moreSensitiveSDC)) +
+    geom_bar(stat="identity") +
+    labs(x = "", y = "Cross Section SDC Ratio", fill="") + 
+    theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  
+  filename = paste("./plots/cs_ratio_SDC_", device, ".pdf", sep="")
+  ggsave(filename, plot)
+  plot
+}
+
+cs_due_ratio <- function(device){
+  plot = ggplot(datNormalized[datNormalized$Device == device, ], aes(x=Code, y=ratioDUE, fill=moreSensitiveDUE)) +
+    geom_bar(stat="identity") +
+    labs(x = "", y = "Cross Section DUE Ratio", fill="") +
+    theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  
+  filename = paste("./plots/cs_ratio_DUE_", device, ".pdf", sep="")
+  ggsave(filename, plot)
+  plot
+}
+```
+
+<!-- We don't need a ratio plot for each device
+#### Xeon Phi
+
+SDC 
+```{r}
+cs_sdc_ratio("XeonPhi")
+```
+
+DUE 
+```{r}
+cs_due_ratio("XeonPhi")
+```
+
+#### TitanV
+SDC
+```{r}
+cs_sdc_ratio("TitanV")
+```
+
+DUE
+```{r}
+cs_due_ratio("TitanV")
+```
+
+#### TitanX
+SDC
+```{r}
+cs_sdc_ratio("TitanX")
+```
+
+DUE
+```{r}
+cs_due_ratio("TitanX")
+```
+
+#### K20
+SDC
+```{r}
+cs_sdc_ratio("K20")
+```
+
+DUE
+```{r}
+cs_due_ratio("K20")
+```
+
+#### CPU
+SDC
+```{r}
+cs_sdc_ratio("CPU")
+```
+
+DUE
+```{r}
+cs_due_ratio("CPU")
+```
+
+#### GPUembedded
+SDC
+```{r}
+cs_sdc_ratio("GPUembedded")
+```
+
+DUE
+```{r}
+cs_due_ratio("GPUembedded")
+```
+
+#### CPU+GPU
+SDC
+```{r}
+cs_sdc_ratio("CPU+GPU")
+```
+
+DUE
+```{r}
+cs_due_ratio("CPU+GPU")
+```
+
+#### FPGA
+SDC
+```{r}
+cs_sdc_ratio("FPGA")
+```
+
+
+-->
+
+#### Cross Sections Ratio ALL devices
+
+SDC
+```{r}
+  dfm1 = melt(datNormalized[, c('Device', 'Code', 'ratioSDC')], id.vars = c(1, 2))
+  colnames(dfm1) = c("Device", "Code", "Larger", "ratioSDC") 
+  dfm1$Larger = ifelse(dfm1$ratioSDC >= 0, "High Energy", "Thermals")
+
+  
+    
+  dfm1[1] <- data.frame(lapply(dfm1[1], function(x) { gsub("GPUembedded", "AMD\nGPU", x) }))
+  dfm1[1] <- data.frame(lapply(dfm1[1], function(x) { gsub("CPU", "AMD\nCPU", x) }))
+  dfm1[1] <- data.frame(lapply(dfm1[1], function(x) { gsub("CPU+GPU", "AMD\nCPU+GPU", x) }))
+  dfm1[1] <- data.frame(lapply(dfm1[1], function(x) { gsub("XeonPhi", "Xeon Phi", x) }))
+
+  # changing factor order
+  dfm1$Device <- factor(dfm1$Device, levels = c("AMD\nCPU", "AMD\nGPU", "AMD\nCPU+GPU", "K20", "TitanX", "TitanV", "Xeon Phi", "FPGA"))
+  
+
+plot = ggplot(dfm1, aes(x=Code, y=ratioSDC, fill=Larger)) +
+  geom_bar(stat="identity") +
+  facet_grid(Device ~ ., scales = "free") +
+  coord_flip() +
+  labs(x = "Code", y = "Cross Section SDC Ratio", fill="") +
+  theme(legend.position="bottom")
+ggsave("./plots/ratio-SDC-thermals-vs-high-all.pdf",plot)
+plot
+```
+
+
+DUE
+```{r}
+  dfm1 = melt(datNormalized[, c('Device', 'Code', 'ratioDUE')], id.vars = c(1, 2))
+  dfm1 = dfm1[complete.cases(dfm1), ]
+  
+  colnames(dfm1) = c("Device", "Code", "Larger", "ratioDUE") 
+  dfm1$Larger = ifelse(dfm1$ratioDUE >= 0, "High Energy", "Thermals")
+  dfm1 = dfm1[dfm1$ratioDUE!=0, ] # removing lavamd from titanV which is 0 but actually should be NA
+
+  
+    
+  dfm1[1] <- data.frame(lapply(dfm1[1], function(x) { gsub("GPUembedded", "AMD\nGPU", x) }))
+  dfm1[1] <- data.frame(lapply(dfm1[1], function(x) { gsub("CPU", "AMD\nCPU", x) }))
+  dfm1[1] <- data.frame(lapply(dfm1[1], function(x) { gsub("CPU+GPU", "AMD\nCPU+GPU", x) }))
+  dfm1[1] <- data.frame(lapply(dfm1[1], function(x) { gsub("XeonPhi", "Xeon Phi", x) }))
+
+  # changing factor order
+  dfm1$Device <- factor(dfm1$Device, levels = c("AMD\nCPU", "AMD\nGPU", "AMD\nCPU+GPU", "K20", "TitanX", "TitanV", "Xeon Phi", "FPGA"))
+  
+
+plot = ggplot(dfm1, aes(x=Code, y=ratioDUE, fill=Larger)) +
+  geom_bar(stat="identity") +
+  facet_grid(Device ~ ., scales = "free") +
+  coord_flip() +
+  labs(x = "Code", y = "Cross Section DUE Ratio", fill="") +
+  theme(legend.position="bottom")
+ggsave("./plots/ratio-DUE-thermals-vs-high-all.pdf",plot)
+plot
+```
+
+### FIT
+
+#### Functions to plot FIT data
+
+```{r}
+
+fit_sdc_plot_errbars <- function(device){
+  datPlot = datNormalized[datNormalized$Device == device, ]
+  
+  dfm1 = melt(datPlot[, c('Code', 'FIT_SDC_high_err', 'FIT_SDC_high')], id.vars = c(1, 2))
+  colnames(dfm1) = c("Code", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'FIT_SDC_thermals_err', 'FIT_SDC_thermals')], id.vars = c(1, 2))
+  colnames(dfm2) = c("Code", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'FIT_SDC_thermals_storm_err', 'FIT_SDC_thermals_storm')], id.vars = c(1, 2))
+  colnames(dfm3) = c("Code", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+  labs(x = "", y = "FIT SDC [a.u.]", fill="") +
+  theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  filename = paste("./plots/FIT_SDC_", device, ".pdf", sep="")
+  ggsave(filename, plot)
+  plot
+}
+
+fit_due_plot_errbars <- function(device){
+  datPlot = datNormalized[datNormalized$Device == device, ]
+  
+  dfm1 = melt(datPlot[, c('Code', 'FIT_DUE_high_err', 'FIT_DUE_high')], id.vars = c(1, 2))
+  colnames(dfm1) = c("Code", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'FIT_DUE_thermals_err', 'FIT_DUE_thermals')], id.vars = c(1, 2))
+  colnames(dfm2) = c("Code", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'FIT_DUE_thermals_storm_err', 'FIT_DUE_thermals_storm')], id.vars = c(1, 2))
+  colnames(dfm3) = c("Code", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+  labs(x = "", y = "FIT DUE [a.u.]", fill="") +
+  theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  filename = paste("./plots/FIT_DUE_", device, ".pdf", sep="")
+  ggsave(filename, plot)
+  plot
+}
+
+sdcplot <- function(device){
+datPlot = datNorm[datNorm$Device == device, ]
+  plot = ggplot(datPlot, aes(x=datPlot$Code, y=datPlot$FITSDC, fill=Neutron_type)) +
+  geom_bar(stat="identity", position="dodge") + 
+  labs(title = device, x = "", y = "FIT SDC [a.u.]", fill="") + 
+  theme(plot.title = element_text(hjust = 0.5), legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))  
+  filename = paste("~/plots/FIT-SDC-", device, ".pdf", sep="")
+  ggsave(filename, plot)
+  plot
+}
+
+dueplot <- function(device){
+  datPlot = datNorm[datNorm$Device == device, ]
+  plot = ggplot(datPlot, aes(x=datPlot$Code, y=datPlot$FITCrash, fill=Neutron_type)) +
+  geom_bar(stat="identity", position="dodge") + 
+  labs(title = device, x = "", y = "FIT DUE [a.u.]", fill="") + 
+  theme(plot.title = element_text(hjust = 0.5), legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  filename = paste("~/plots/FIT-DUE-", device, ".pdf", sep="")
+  ggsave(filename, plot)
+  plot
+}
+```
+
+#### Plots
+
+##### APU
+SDC
+```{r}
+   datPlot = subset(datNormalized, Device=="CPU" | Device == "GPUembedded" | Device == "CPU+GPU")
+
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_high_err', 'FIT_SDC_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_err', 'FIT_SDC_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_storm_err', 'FIT_SDC_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm3) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("GPUembedded", "AMD\nGPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU", "AMD\nCPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU+GPU", "AMD\nCPU+GPU", x) }))
+  
+
+  # changing factor order
+  dfm$Device <- factor(dfm$Device, levels = c("AMD\nCPU", "AMD\nGPU", "AMD\nCPU+GPU"))
+  
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(~ Device) +
+  labs(x = "", y = "FIT SDC [a.u.]", fill="") + 
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  #filename = paste("./plots/FIT_SDC_", device, ".pdf", sep="")
+  ggsave("./plots/FIT_SDC_APU.pdf", plot, width = 12, height = 7)
+  plot
+  
+
+```
+
+DUE
+```{r}
+   datPlot = subset(datNormalized, Device=="CPU" | Device == "GPUembedded" | Device == "CPU+GPU")
+
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_high_err', 'FIT_DUE_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_err', 'FIT_DUE_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_storm_err', 'FIT_DUE_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm3) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("GPUembedded", "AMD\nGPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU", "AMD\nCPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU+GPU", "AMD\nCPU+GPU", x) }))
+  
+
+  # changing factor order
+  dfm$Device <- factor(dfm$Device, levels = c("AMD\nCPU", "AMD\nGPU", "AMD\nCPU+GPU"))
+  
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(~ Device) +
+  labs(x = "", y = "FIT DUE [a.u.]", fill="") + 
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  #filename = paste("./plots/FIT_SDC_", device, ".pdf", sep="")
+  ggsave("./plots/FIT_DUE_APU.pdf", plot, width = 12, height = 7)
+  plot
+  
+
+```
+
+##### NVIDIAs
+SDC
+```{r}
+   datPlot = subset(datNormalized, Device=="K20" | Device == "TitanV" | Device == "TitanX")
+
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_high_err', 'FIT_SDC_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_err', 'FIT_SDC_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_storm_err', 'FIT_SDC_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm3) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  dfm$Device <- factor(dfm$Device, levels = c("K20", "TitanX", "TitanV"))
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(~ Device) +
+  labs(x = "", y = "FIT SDC [a.u.]", fill="") +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  #filename = paste("./plots/FIT_SDC_", device, ".pdf", sep="")
+  ggsave("./plots/FIT_SDC_NVIDIA.pdf", plot, width = 12, height = 7)
+  plot
+  
+
+```
+DUE
+```{r}
+   datPlot = subset(datNormalized, Device=="K20" | Device == "TitanV" | Device == "TitanX")
+
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_high_err', 'FIT_DUE_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_err', 'FIT_DUE_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_storm_err', 'FIT_DUE_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm3) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  dfm$Device <- factor(dfm$Device, levels = c("K20", "TitanX", "TitanV"))
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(~ Device) +
+  labs(x = "", y = "FIT DUE [a.u.]", fill="") +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  #filename = paste("./plots/FIT_SDC_", device, ".pdf", sep="")
+  ggsave("./plots/FIT_DUE_NVIDIA.pdf", plot, width = 12, height = 7)
+  plot
+  
+
+```
+
+##### Xeon Phi
+SDC
+```{r}
+fit_sdc_plot_errbars("XeonPhi")
+```
+
+DUE
+```{r}
+fit_due_plot_errbars("XeonPhi")
+```
+
+
+
+##### TitanX
+
+SDC
+```{r}
+fit_sdc_plot_errbars("TitanX")
+```
+
+DUE
+```{r}
+fit_due_plot_errbars("TitanX")
+```
+
+
+##### TitanV
+SDC
+```{r}
+fit_sdc_plot_errbars("TitanV")
+```
+
+DUE
+```{r}
+fit_due_plot_errbars("TitanV")
+```
+
+
+##### K20
+
+SDC
+```{r}
+fit_sdc_plot_errbars("K20")
+```
+
+DUE
+```{r}
+fit_due_plot_errbars("K20")
+```
+
+
+##### CPU
+
+SDC
+```{r}
+fit_sdc_plot_errbars("CPU")
+```
+
+DUE
+```{r}
+fit_due_plot_errbars("CPU")
+```
+
+
+##### GPUembedded
+
+SDC
+```{r}
+fit_sdc_plot_errbars("GPUembedded")
+```
+
+DUE
+```{r}
+fit_due_plot_errbars("GPUembedded")
+```
+
+
+
+##### CPU+GPU
+
+SDC
+```{r}
+fit_sdc_plot_errbars("CPU+GPU")
+```
+
+DUE
+```{r}
+fit_due_plot_errbars("CPU+GPU")
+```
+
+##### FPGA
+
+SDC
+```{r}
+fit_sdc_plot_errbars("FPGA")
+```

@@ -1,0 +1,140 @@
+---
+title: "DSN 2019 Cross Sections"
+author: "Daniel"
+date: "April 04, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading data and libraries
+
+Load ggplot2 for plotting data and the CSV file with all data. We also correct the cross section of thermals since the rotax spectrum is different, which means we should correct the fluence we had before by a factor of (4.96/2.71). Thus, we divide the cross section by this factor since the cross section is (number of errors)/(fluence).
+
+```{r}
+library(ggplot2)
+library(reshape2)
+
+dat = read.csv("data_formatted.csv",sep=",")
+
+dat$cross_section_SDC_thermals = dat$cross_section_SDC_thermals / (4.96/2.71)
+
+summary(dat)
+```
+
+
+## Normalize SDC and DUE Cross Sections
+
+Find the minimum value for each device and normalize SDC and DUE cross sections. Then, append the values normalize to a new data frame called "datNormalized"
+
+```{r}
+datNormalized = dat
+for (board in unique(dat$Device)) {
+  # Get all cross section values for one device
+  tmp_values = c(subset(dat,dat$Device==board)$cross_section_SDC_high, subset(dat,dat$Device==board)$cross_section_DUE_high, subset(dat,dat$Device==board)$cross_section_SDC_thermals, subset(dat,dat$Device==board)$cross_section_DUE_thermals)
+  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+  print(paste("Device: ", board, "; Minimum: ",tmp_min))
+  
+  # Normalize all date from one device to the minimum value found
+  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+}
+
+```
+
+## Calculate the average cross section per device
+
+```{r}
+dat_mean = aggregate(datNormalized[, c('cross_section_SDC_high', 'cross_section_DUE_high', 'cross_section_SDC_thermals', 'cross_section_DUE_thermals')], list(datNormalized$Device), mean, na.rm=TRUE,na.action = na.omit)
+#dat_mean
+```
+
+
+## Compute FIT rates for some scenarios, percentage
+High Energy scenarios:
+sea level 13
+Leadville 12.8X the sea leval = 12.8 * 13 = 166.4
+Thermal flux scenarions:
+place: <nominal>, <20% increase>, <44.4%>, <100% increase, rainy day>
+sea level: 4, 4.8, 5.776, 8
+Leadville 87, 104, 125.628, 174
+
+
+```{r}
+
+rm(dat_melted)
+high = dat_mean$cross_section_SDC_high * 13
+thermals = dat_mean$cross_section_SDC_thermals * 5.776
+dat_mean$High_Energy = high*100/(high+thermals)
+dat_mean$Thermals = thermals*100/(high+thermals)
+dat_melted = melt(dat_mean[,c('Group.1', 'High_Energy', 'Thermals')], id.vars = 'Group.1' )
+dat_melted$scenario = 'NSDC'
+#dat_melted$scenario = 'NYC SDC'
+#dat_melted = rbind(dat_melted, dat_melted2)
+
+rm(dat_melted2)
+high = dat_mean$cross_section_DUE_high * 13
+thermals = dat_mean$cross_section_DUE_thermals * 5.776
+dat_mean$High_Energy = high*100/(high+thermals)
+dat_mean$Thermals = thermals*100/(high+thermals)
+dat_melted2 = melt(dat_mean[,c('Group.1', 'High_Energy', 'Thermals')], id.vars = 'Group.1' )
+dat_melted2$scenario = 'NDUE'
+#dat_melted2$scenario = 'NYC DUE'
+dat_melted = rbind(dat_melted, dat_melted2)
+
+
+rm(dat_melted2)
+high = dat_mean$cross_section_SDC_high * 166.4
+thermals = dat_mean$cross_section_SDC_thermals * 125.628
+dat_mean$High_Energy = high*100/(high+thermals)
+dat_mean$Thermals = thermals*100/(high+thermals)
+dat_melted2 = melt(dat_mean[,c('Group.1', 'High_Energy', 'Thermals')], id.vars = 'Group.1' )
+dat_melted2$scenario = 'LSDC'
+#dat_melted2$scenario = 'LXV SDC'
+dat_melted = rbind(dat_melted, dat_melted2)
+
+rm(dat_melted2)
+high = dat_mean$cross_section_DUE_high * 166.4
+thermals = dat_mean$cross_section_DUE_thermals * 125.628
+dat_mean$High_Energy = high*100/(high+thermals)
+dat_mean$Thermals = thermals*100/(high+thermals)
+dat_melted2 = melt(dat_mean[,c('Group.1', 'High_Energy', 'Thermals')], id.vars = 'Group.1' )
+dat_melted2$scenario = 'LDUE'
+#dat_melted2$scenario = 'LXV DUE'
+dat_melted = rbind(dat_melted, dat_melted2)
+
+dat_melted$variable <- factor(dat_melted$variable, levels = c("Thermals", "High_Energy"))
+
+dat_melted$scenario <- factor(dat_melted$scenario, levels = c("NSDC", "NDUE", "LSDC", "LDUE"))
+#dat_melted$scenario <- factor(dat_melted$scenario, levels = c("NYC SDC", "NYC DUE", "LXV SDC", "LXV DUE"))
+#dat_melted$scenario <- factor(dat_melted$scenario, levels = c("NYC SDC", "NYC DUE", "Leadville  SDC", "Leadville DUE"))
+
+dat_melted$Group.1 <- factor(dat_melted$Group.1, levels = c( "CPU", "GPUembedded", "CPU+GPU", "XeonPhi", "K20", "TitanX", "TitanV", "FPGA"))
+
+#dat_melted = dat_melted[which(dat_melted$Group.1 != "CPU" & dat_melted$Group.1 != "GPUembedded"),]
+
+p = ggplot(dat_melted) +
+  geom_bar(stat="identity",aes(x = scenario, y = value, fill=variable), position=position_stack()) +
+  labs(x = "Location", y = "Average FIT Rate Contribution [%]") +
+  #facet_wrap(~Group.1, scales = "free_y") +
+  facet_wrap(~Group.1, ncol=4) +
+  #scale_y_log10() +
+  scale_fill_manual(values=c(
+  "#0070c0"
+  , "#c00000")
+    , labels = c('Thermal', 'High Energy')
+  )+
+  theme(legend.title = element_blank(), legend.position="bottom",axis.text.x=element_text(size=13) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+
+p
+ggsave(p, file="SDC-scenarios-per.pdf", width = 12, height = 7)
+
+```
+
+
+

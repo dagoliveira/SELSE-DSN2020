@@ -1,0 +1,45 @@
+
+NYC (or sea level) high energy neutrons = 13 n/cm^2*h
+NYC (or sea level) thermal neutrons = 4 n/cm^2*h
+
+
+# Airplane
+
+Airplane cruising altitude (35,000 feet). Values obtained from http://www.seutest.com/cgi-bin/FluxCalculator.cgi
+Relative flux to NYC: 352.51. Then:
+For high energy: 13*352.51 = 4582.63 n/cm^2*h
+For thermals: 4*352.51 = 1410.04
+
+
+
+# Supercomputer Hall
+
+JEDEC document states: 
+
+    For Concrete, in a large building it was found that two 15-cm (6-inch) slabs (plus associated roofing, ceiling, and flooring material, ductwork, etc. in an industrial building) reduced the high-energy portion (E > 10 MeV) of the neutron spectrum by a factor of 2.3, while the total neutron flux was reduced by a factor of only 1.6. As they penetrate the concrete, low-energy neutrons are scattered, thermalized, and absorbed, but the high-energy neutrons are attenuated by interactions which cause the nuclei in the shielding to emit neutrons with energies in the MeV range, regenerating the low-energy portion of the neutron spectrum. 
+
+
+## Los Alamos
+JEDEC relative flux for Los Alamos: 5.60
+
+High energy flux without walls: 5.6*13 = 72.8 n/cm^2*h
+Thermals flux without walls: 5.6*4 = 22.4 n/cm^2*h
+
+With attenuation from 15cm walls:
+    High energy divide by 2.3: 72.8/2.3 = 31.65 n/cm^2*h
+    Thermals divide by 1.6: 22.4/1.6 = 14 n/cm^2*h
+
+
+
+## Oak Ridge
+
+260 meters
+
+1.26x high energy
+
+High energy flux without walls: 1.26*13 = 16.38 n/cm^2*h
+Thermals flux without walls: 1.26*4 = 5.04 n/cm^2*h
+
+With attenuation from 15cm walls:
+    High energy divide by 2.3: 16.38/2.3 = 7.12173913 n/cm^2*h
+    Thermals divide by 1.6: 5.04/1.6 = 3.15 n/cm^2*h

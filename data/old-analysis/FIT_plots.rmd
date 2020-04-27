@@ -1,0 +1,437 @@
+---
+title: "DSN2019 FIT"
+author: "Daniel"
+date: "December 1, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading data and libraries
+
+Load ggplot2 for plotting data and the CSV file with all data. We also correct the cross section of thermals since the rotax spectrum is different, which means we should correct the fluence we had before by a factor of (4.96/2.71). Thus, we divide the cross section by this factor since the cross section is (number of errors)/(fluence).
+
+```{r}
+library(ggplot2)
+library(reshape2)
+
+dat = read.csv("data_formatted.csv",sep=",")
+
+dat$cross_section_SDC_thermals = dat$cross_section_SDC_thermals / (4.96/2.71)
+
+summary(dat)
+```
+
+
+## Normalize SDC and DUE Cross Sections
+
+Find the minimum value for each device and normalize SDC and DUE cross sections. Then, append the values normalize to a new data frame called "datNormalized"
+
+```{r}
+datNormalized = dat
+
+normalizeCS <- function(df){
+  tmp_values = c(df$cross_section_SDC_high, df$cross_section_DUE_high, df$cross_section_SDC_thermals, df$cross_section_DUE_thermals)
+  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+  for (board in unique(df$Device)){
+    print(paste("Device: ", board, "; Minimum: ",tmp_min))
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+  }
+  
+  
+}
+
+AMD = c("CPU", "CPU+GPU", "GPUembedded")
+NVIDIA = c("K20", "TitanX", "TitanV")
+
+amd_df = dat[dat$Device %in% AMD, ]
+#normalizeCS(amd_df)
+  tmp_values = c(amd_df$cross_section_SDC_high, amd_df$cross_section_DUE_high, amd_df$cross_section_SDC_thermals, amd_df$cross_section_DUE_thermals)
+  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+  print(paste("Device: AMD Minimum: ",tmp_min))
+  for (board in unique(amd_df$Device)){
+    print(paste("Device: ", board, "; Minimum: ",tmp_min))
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+  }
+
+
+nvidia_df = dat[dat$Device %in% NVIDIA, ]
+#normalizeCS(nvidia_df)
+  tmp_values = c(nvidia_df$cross_section_SDC_high, nvidia_df$cross_section_DUE_high, nvidia_df$cross_section_SDC_thermals, nvidia_df$cross_section_DUE_thermals)
+  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+  print(paste("Device: NVIDIA Minimum: ",tmp_min))
+  for (board in unique(nvidia_df$Device)){
+    print(paste("Device: ", board, "; Minimum: ",tmp_min))
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+  }
+  
+xeon_df = dat[dat$Device == "XeonPhi", ]
+#normalizeCS(xeon_df)
+  tmp_values = c(xeon_df$cross_section_SDC_high, xeon_df$cross_section_DUE_high, xeon_df$cross_section_SDC_thermals, xeon_df$cross_section_DUE_thermals)
+  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+  print(paste("Device: Xeon Minimum: ",tmp_min))
+  for (board in unique(xeon_df$Device)){
+    print(paste("Device: ", board, "; Minimum: ",tmp_min))
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+  }
+  
+fpga_df = dat[dat$Device == "FPGA", ]
+#normalizeCS(fpga_df)
+  tmp_values = c(fpga_df$cross_section_SDC_high, fpga_df$cross_section_DUE_high, fpga_df$cross_section_SDC_thermals, fpga_df$cross_section_DUE_thermals)
+  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+  print(paste("Device: FPGA Minimum: ",tmp_min))
+  for (board in unique(fpga_df$Device)){
+    print(paste("Device: ", board, "; Minimum: ",tmp_min))
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+    datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+  }
+  
+
+
+datNormalized$SDC_DUE_ratio_high = datNormalized$cross_section_DUE_high / datNormalized$cross_section_SDC_high
+
+datNormalized$SDC_DUE_ratio_thermal = datNormalized$cross_section_DUE_thermals / datNormalized$cross_section_SDC_thermals
+#for (board in unique(dat$Device)) {
+#  # Get all cross section values for one device
+#  tmp_values = c(subset(dat,dat$Device==board)$cross_section_SDC_high, subset(dat,dat$Device==board)$cross_section_DUE_high, subset(dat,dat$Device==board)$cross_section_SDC_thermals, subset(dat,dat$Device==board)$cross_section_DUE_thermals)
+#  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+#  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+#  print(paste("Device: ", board, "; Minimum: ",tmp_min))
+  
+#  # Normalize all date from one device to the minimum value found
+#  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+#  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+#  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+#  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+#}
+```
+
+
+## Compute FIT for High Energy
+
+Normal flux is 13 neutrons per cm^2 per hour. Since data is normalized, there is no need to multiply by 10^9
+Flux inside a supercomputer hall is 31.65, and flux for an airplane at 35,000 feet is 4582.63
+
+```{r}
+datNormalized$FIT_SDC_high = datNormalized$cross_section_SDC_high * 13
+datNormalized$FIT_DUE_high = datNormalized$cross_section_DUE_high * 13
+
+datNormalized$FIT_SDC_high_LANLsupercomputer = datNormalized$cross_section_SDC_high * 31.65
+datNormalized$FIT_DUE_high_LANLsupercomputer = datNormalized$cross_section_DUE_high * 31.65
+
+datNormalized$FIT_SDC_high_ORNLsupercomputer = datNormalized$cross_section_SDC_high * 7.12173913
+datNormalized$FIT_DUE_high_ORNLsupercomputer = datNormalized$cross_section_DUE_high * 7.12173913
+
+datNormalized$FIT_SDC_high_airplane = datNormalized$cross_section_SDC_high * 4582.63
+datNormalized$FIT_DUE_high_airplane = datNormalized$cross_section_DUE_high * 4582.63
+```
+
+## Compute FIT for Thermals
+
+
+Normal flux is 4 neutrons per cm^2 per hour under normal environments. 
+
+```{r}
+datNormalized$FIT_SDC_thermals = datNormalized$cross_section_SDC_thermals * 4
+datNormalized$FIT_DUE_thermals = datNormalized$cross_section_DUE_thermals * 4
+```
+
+During a thunderstrom the neutron flux is about 8 neutrons
+
+```{r}
+datNormalized$FIT_SDC_thermals_storm = datNormalized$cross_section_SDC_thermals * 8
+datNormalized$FIT_DUE_thermals_storm = datNormalized$cross_section_DUE_thermals * 8
+```
+
+LANL Supercomputer hall thermal flux is 14 neutrons per cm^2 per hour
+
+```{r}
+datNormalized$FIT_SDC_thermals_LANLsupercomputer = datNormalized$cross_section_SDC_thermals * 14
+datNormalized$FIT_DUE_thermals_LANLsupercomputer = datNormalized$cross_section_DUE_thermals * 14
+```
+
+ORNL Supercomputer hall thermal flux is 14 neutrons per cm^2 per hour
+
+```{r}
+datNormalized$FIT_SDC_thermals_ORNLsupercomputer = datNormalized$cross_section_SDC_thermals * 3.15
+datNormalized$FIT_DUE_thermals_ORNLsupercomputer = datNormalized$cross_section_DUE_thermals * 3.15
+```
+
+Airplane at 35,000 feet thermal flux is 1410.04 neutrons per cm^2 per hour
+```{r}
+datNormalized$FIT_SDC_thermals_airplane = datNormalized$cross_section_SDC_thermals * 1410.04
+datNormalized$FIT_DUE_thermals_airplane = datNormalized$cross_section_DUE_thermals * 1410.04
+```
+
+
+## Compute the error bars
+
+Using the Poisson distribution with 95% confidence, which is  1.96*sqrt(test_mean/#tests)
+
+```{r}
+  datNormalized$cross_section_SDC_high_err = 1.96*sqrt(datNormalized$cross_section_SDC_high/datNormalized$number_SDCs_high)
+  datNormalized$cross_section_DUE_high_err = 1.96*sqrt(datNormalized$cross_section_DUE_high/datNormalized$number_DUE_high)
+
+  datNormalized$cross_section_SDC_thermals_err = 1.96*sqrt(datNormalized$cross_section_SDC_thermals/datNormalized$number_SDCs_thermals)
+  datNormalized$cross_section_DUE_thermals_err = 1.96*sqrt(datNormalized$cross_section_DUE_thermals/datNormalized$number_DUE_thermals)
+  
+  datNormalized$FIT_SDC_high_err = 1.96*sqrt(datNormalized$FIT_SDC_high/datNormalized$number_SDCs_high)
+  datNormalized$FIT_DUE_high_err = 1.96*sqrt(datNormalized$FIT_DUE_high/datNormalized$number_DUE_high)
+  
+  datNormalized$FIT_SDC_high_LANLsupercomputer_err = 1.96*sqrt(datNormalized$FIT_SDC_high_LANLsupercomputer/datNormalized$number_SDCs_high)
+  datNormalized$FIT_DUE_high_LANLsupercomputer_err = 1.96*sqrt(datNormalized$FIT_DUE_high_LANLsupercomputer/datNormalized$number_DUE_high)
+  
+  datNormalized$FIT_SDC_high_ORNLsupercomputer_err = 1.96*sqrt(datNormalized$FIT_SDC_high_ORNLsupercomputer/datNormalized$number_SDCs_high)
+  datNormalized$FIT_DUE_high_ORNLsupercomputer_err = 1.96*sqrt(datNormalized$FIT_DUE_high_ORNLsupercomputer/datNormalized$number_DUE_high)
+  
+  datNormalized$FIT_SDC_high_airplane_err = 1.96*sqrt(datNormalized$FIT_SDC_high_airplane/datNormalized$number_SDCs_high)
+  datNormalized$FIT_DUE_high_airplane_err = 1.96*sqrt(datNormalized$FIT_DUE_high_airplane/datNormalized$number_DUE_high)
+
+  datNormalized$FIT_DUE_thermals_err = 1.96*sqrt(datNormalized$FIT_DUE_thermals/datNormalized$number_DUE_thermals)
+  datNormalized$FIT_SDC_thermals_err = 1.96*sqrt(datNormalized$FIT_SDC_thermals/datNormalized$number_SDCs_thermals)
+
+  datNormalized$FIT_SDC_thermals_storm_err = 1.96*sqrt(datNormalized$FIT_SDC_thermals_storm/datNormalized$number_SDCs_thermals)
+  datNormalized$FIT_DUE_thermals_storm_err = 1.96*sqrt(datNormalized$FIT_DUE_thermals_storm/datNormalized$number_DUE_thermals)
+  
+  datNormalized$FIT_DUE_thermals_airplane_err = 1.96*sqrt(datNormalized$FIT_DUE_thermals_airplane/datNormalized$number_DUE_thermals)
+  datNormalized$FIT_SDC_thermals_airplane_err = 1.96*sqrt(datNormalized$FIT_SDC_thermals_airplane/datNormalized$number_SDCs_thermals)
+  
+  datNormalized$FIT_DUE_thermals_ORNLsupercomputer_err = 1.96*sqrt(datNormalized$FIT_DUE_thermals_ORNLsupercomputer/datNormalized$number_DUE_thermals)
+  datNormalized$FIT_SDC_thermals_ORNLsupercomputer_err = 1.96*sqrt(datNormalized$FIT_SDC_thermals_ORNLsupercomputer/datNormalized$number_SDCs_thermals)
+  
+  datNormalized$FIT_DUE_thermals_LANLsupercomputer_err = 1.96*sqrt(datNormalized$FIT_DUE_thermals_LANLsupercomputer/datNormalized$number_DUE_thermals)
+  datNormalized$FIT_SDC_thermals_LANLsupercomputer_err = 1.96*sqrt(datNormalized$FIT_SDC_thermals_LANLsupercomputer/datNormalized$number_SDCs_thermals)
+  
+  write.csv(datNormalized, file="~/DSN.csv")
+```
+
+
+
+## FIT Plots
+
+### AMD
+
+```{r}
+  datPlot = subset(datNormalized, Device=="CPU" | Device == "GPUembedded" | Device == "CPU+GPU")
+
+  #SDC
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_high_err', 'FIT_SDC_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_err', 'FIT_SDC_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_storm_err', 'FIT_SDC_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm3) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("GPUembedded", "AMD\nGPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU", "AMD\nCPU", x) }))
+  dfm[2] <- data.frame(lapply(dfm[2], function(x) { gsub("CPU+GPU", "AMD\nCPU+GPU", x) }))
+  
+  dfm$Event_Type = "SDC"
+  
+  #DUE
+  dfm4 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_high_err', 'FIT_DUE_high')], id.vars = c(1, 2, 3))
+  colnames(dfm4) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm4$Neutron_Type = "High Energy"
+  dfm5 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_err', 'FIT_DUE_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm5) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm5$Neutron_Type = "Thermals"
+  dfm6 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_storm_err', 'FIT_DUE_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm6) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm6$Neutron_Type = "Thermals (Storm)"
+  dfmD = rbind(dfm4, dfm5, dfm6)
+  
+  dfmD[2] <- data.frame(lapply(dfmD[2], function(x) { gsub("GPUembedded", "AMD\nGPU", x) }))
+  dfmD[2] <- data.frame(lapply(dfmD[2], function(x) { gsub("CPU", "AMD\nCPU", x) }))
+  dfmD[2] <- data.frame(lapply(dfmD[2], function(x) { gsub("CPU+GPU", "AMD\nCPU+GPU", x) }))
+  
+  dfmD$Event_Type = "DUE"
+
+  dfm = rbind(dfm, dfmD)
+  
+  # changing factor order
+  dfm$Device <- factor(dfm$Device, levels = c("AMD\nCPU", "AMD\nGPU", "AMD\nCPU+GPU"))
+  
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(Event_Type ~ Device, scale="free") +
+  labs(x = "", y = "FIT [a.u.]", fill="") + 
+    scale_fill_manual(values=c("#33a02c", "#a6cee3", "#1f78b4")) +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  ggsave("./plots_final/FIT_SDC_DUE_APU.pdf", plot, width = 12, height = 7)
+  plot
+  
+
+```
+
+### NVIDIA
+
+```{r}
+  datPlot = subset(datNormalized, Device=="K20" | Device == "TitanV" | Device == "TitanX")
+
+  #SDC
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_high_err', 'FIT_SDC_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_err', 'FIT_SDC_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_storm_err', 'FIT_SDC_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm3) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  dfm$Event_Type = "SDC"
+  
+  #DUE
+  dfm4 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_high_err', 'FIT_DUE_high')], id.vars = c(1, 2, 3))
+  colnames(dfm4) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm4$Neutron_Type = "High Energy"
+  dfm5 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_err', 'FIT_DUE_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm5) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm5$Neutron_Type = "Thermals"
+  dfm6 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_storm_err', 'FIT_DUE_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm6) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm6$Neutron_Type = "Thermals (Storm)"
+  dfmD = rbind(dfm4, dfm5, dfm6)
+
+  dfmD$Event_Type = "DUE"
+
+  dfm = rbind(dfm, dfmD)
+  
+  # changing factor order
+  dfm$Device <- factor(dfm$Device, levels = c("K20", "TitanX", "TitanV"))
+  
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(Event_Type ~ Device, scale="free") +
+  labs(x = "", y = "FIT [a.u.]", fill="") + 
+    scale_fill_manual(values=c("#33a02c", "#a6cee3", "#1f78b4")) +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  ggsave("./plots_final/FIT_SDC_DUE_NVIDIA.pdf", plot, width = 12, height = 7)
+  plot
+
+```
+
+
+### Xeon Phi
+
+```{r}
+  datPlot = subset(datNormalized, Device=="XeonPhi")
+
+  #SDC
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_high_err', 'FIT_SDC_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_err', 'FIT_SDC_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_storm_err', 'FIT_SDC_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm3) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  dfm$Event_Type = "SDC"
+  
+  #DUE
+  dfm4 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_high_err', 'FIT_DUE_high')], id.vars = c(1, 2, 3))
+  colnames(dfm4) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm4$Neutron_Type = "High Energy"
+  dfm5 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_err', 'FIT_DUE_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm5) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm5$Neutron_Type = "Thermals"
+  dfm6 = melt(datPlot[, c('Code', 'Device', 'FIT_DUE_thermals_storm_err', 'FIT_DUE_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm6) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm6$Neutron_Type = "Thermals (Storm)"
+  dfmD = rbind(dfm4, dfm5, dfm6)
+
+  dfmD$Event_Type = "DUE"
+
+  dfm = rbind(dfm, dfmD)
+  
+  # changing factor order
+  #dfm$Device <- factor(dfm$Device, levels = c("K20", "TitanX", "TitanV"))
+  
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    facet_grid(Event_Type ~ ., scale="free") +
+  labs(x = "", y = "FIT [a.u.]", fill="") + 
+    scale_fill_manual(values=c("#33a02c", "#a6cee3", "#1f78b4")) +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  ggsave("./plots_final/FIT_SDC_DUE_XeonPhi.pdf", plot, width = 5, height = 6)
+  plot
+
+```
+
+
+### FPGA
+
+```{r}
+  datPlot = subset(datNormalized, Device=="FPGA")
+
+  #SDC
+  dfm1 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_high_err', 'FIT_SDC_high')], id.vars = c(1, 2, 3))
+  colnames(dfm1) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm1$Neutron_Type = "High Energy"
+  dfm2 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_err', 'FIT_SDC_thermals')], id.vars = c(1, 2, 3))
+  colnames(dfm2) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm2$Neutron_Type = "Thermals"
+  dfm3 = melt(datPlot[, c('Code', 'Device', 'FIT_SDC_thermals_storm_err', 'FIT_SDC_thermals_storm')], id.vars = c(1, 2, 3))
+  colnames(dfm3) = c("Code", "Device", "Error", "Neutron_Type", "FIT")
+  dfm3$Neutron_Type = "Thermals (Storm)"
+  dfm = rbind(dfm1, dfm2, dfm3)
+  
+  dfm$Event_Type = "SDC"
+  
+
+  #dfm = rbind(dfm, dfmD)
+  
+  # changing factor order
+  #dfm$Device <- factor(dfm$Device, levels = c("K20", "TitanX", "TitanV"))
+  
+  
+  plot = ggplot(dfm, aes(x=Code, weight=FIT, ymin=FIT-Error, ymax=FIT+Error, fill=Neutron_Type)) +
+  geom_bar      (position=position_dodge(), aes(y=FIT), stat="identity") +
+  geom_errorbar (position=position_dodge(width=0.9), width=0.2, colour="black") +
+    #facet_grid(Event_Type ~ ., scale="free") +
+  labs(x = "", y = "FIT SDC [a.u.]", fill="") + 
+    scale_fill_manual(values=c("#33a02c", "#a6cee3", "#1f78b4")) +
+    theme(legend.position="bottom")
+  #theme(legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14))
+  ggsave("./plots_final/FIT_SDC_DUE_FPGA.pdf", plot, width = 5, height = 5)
+  plot
+
+```

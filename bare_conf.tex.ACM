@@ -1,0 +1,110 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This is the template for submission to HPCA 2020
+% The cls file is a modified from  'sig-alternate.cls'
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% https://www.hpca-conf.org/2020/wp-content/uploads/2019/07/hpca26_sample.pdf
+% https://www.hpca-conf.org/2020/wp-content/uploads/2019/07/hpca26-latex-template.tar.gz
+
+\documentclass{sig-alternate}
+\setlength{\paperheight}{11in}
+\setlength{\paperwidth}{8.5in}
+
+\newcommand{\ignore}[1]{}
+\usepackage[pass]{geometry}
+\usepackage{fancyhdr}
+\usepackage[normalem]{ulem}
+\usepackage[hyphens]{url}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{soul}
+\usepackage{enumitem}
+
+
+%%%%%%%%%%%---SETME-----%%%%%%%%%%%%%
+\newcommand{\hpcasubmissionnumber}{XXX}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sethlcolor{white}
+
+% When sethlcolor is white, your highlights will not show up.  Use
+% \sethlcolor{white} to submit your paper pdf.  When compiling your second
+% pdf with highlighted changes, simply remove \sethlcolor{white} and add your
+% optional 100-word appendix.
+% Use \hl{ ... } to highlight any text.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\fancypagestyle{firstpage}{
+  \fancyhf{}
+\setlength{\headheight}{50pt}
+\renewcommand{\headrulewidth}{0pt}
+  \fancyhead[C]{\normalsize{HPCA 2020 Submission
+      \textbf{\#\hpcasubmissionnumber} -- Confidential Draft -- Do NOT Distribute!!}}
+  \pagenumbering{arabic}
+}
+
+%%%%%%%%%%%---SETME-----%%%%%%%%%%%%%
+\title{Thermal Neutrons: a Possible Threat for Supercomputers and Safety Critical Applications}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{flushend}
+\usepackage{multirow}
+
+% Nathan - TodoNotes
+%\usepackage[disable]{todonotes}
+% ^^^ uncomment the above line to disable todonotes, this will
+%     disable the TODO blocks in the document
+\usepackage{todonotes}
+
+\usepackage{textcomp} % \textdegree
+\usepackage{subcaption}
+
+
+%commands
+\newcommand{\doing}[1]{{\leavevmode\color{green}[#1]}}
+
+% Nathan - commenting out this 'todo' section below because it conflicts
+% with todonotes, hope that's OK :(
+% \newcommand\todo[1]{\textcolor{red}{#1}}
+
+\renewcommand\todo[1]{\textcolor{red}{#1}}
+
+
+\begin{document}
+
+
+\maketitle
+\thispagestyle{firstpage}
+\pagestyle{plain}
+
+
+\begin{abstract}
+\input{src/abstract}
+\end{abstract}
+
+
+%\keywords{Supercomputer, HPC, Radiation, Thermal neutrons, Resilience}
+
+
+\input{src/introduction}
+\input{src/background}
+%\input{src/related}
+\input{src/methodology}
+\input{src/memories}
+\input{src/cross-section-results}
+\input{src/fit-results}
+\input{src/conclusion}
+
+
+
+\bibliographystyle{ieeetr}
+\bibliography{ref}
+
+
+\end{document}
+
+

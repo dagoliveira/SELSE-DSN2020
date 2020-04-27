@@ -1,0 +1,66 @@
+\section{Background and Related Works}
+\label{sec_background}
+
+%This section serves as a background and related works on high energy and thermal neutrons effects on computing devices. 
+%
+%\subsection{Motivation}
+
+Radiation is a known cause of upsets in computers~\cite{Jedec2006}. The interaction of particles, primarily neutrons for terrestrial machines, with transistors can reverse the value of the bits stored in memory or create current spikes in logic operations. These faults can create an undetected error known as Silent Data Corruption (SDC), or create a Detected Unrecoverable Error (DUE). It is well known that thermal neutrons can affect electronic devices~\cite{Baumann2005, ziegler2003}; however, only devices containing $^{10}B$ are susceptible to thermal neutrons. 
+Approximately 20\% of naturally occurring boron is $^{10}B$ with the rest primarily being $^{11}B$. Depleted boron, where the $^{10}B$ content is low, is expensive in large quantities and generally not used in COTS parts. %Previous generations of silicon chips used borophosphosilicate glass in the manufacturing process until it was shown to increase by $8\times$ the likelihood of upsets and replaced with glass not containing boron~\cite{baumann1995boron,normand2006quantifying}. Until recently the "boron problem" was considered a solved issue, however, as our experiments show, newer silicon chips seem to have re-introduced large amounts of boron back into the manufacturing process. Understanding how this change effects overall system reliability is the primary motivation for this work.
+
+Recently, $^{10}B$ was found in the manufacturing process of COTS devices~\cite{wen2010b10}. It is worth noting that $^{10}B$ presence does not depend on the technology node but on the quality of the manufacturing process (smaller transistors will have less Boron, but also less Silicon. The Boron/Silicon percentage is not necessarily reduced). As devices produced for the user market are now employed in HPC and safety-critical applications, we must expect $^{10}B$ to be present. 
+%In fact, purified Boron is expensive and would increase the device price (unjustified for user applications). 
+Some previous work has studied the sensitivity of SRAM and FPGA devices to thermal neutrons~\cite{lee2015radiation,fang2016characterization,maillard2015neutron}. Weulersse et al.~\cite{weulersse2018contribution} compared the error rates of some memories (SRAM, CLB, caches) induced by thermal neutrons, 60MeV protons, and 14MeV neutrons. %Weulersse et al. experiments were conducted on memory devices not typically used in HPC systems. In addition,many memory errors  can be masked or detected through ECC and parity on HPC systems. %Unfortunately, Weulersse et al. do not share details about the kind of errors observed during their experiments (single vs. multiple bit flips), preventing extrapolation of their results to HPC devices with ECC enabled.
+
+%Our work advances the knowledge on HPC reliability by considering the impact of thermal neutrons  on the reliability of HPC devices.  The radiation experiments were performed on devices  executing representative applications under normal operational configurations (i.e., protection mechanisms enabled) to provide a realistic comparison between the error rates induced by high energy and thermal neutrons. Unlike previous publications, we perform both thermal and high energy neutrons experiments on exactly the same devices in the same conditions to limit comparison uncertainty. Furthermore, for the first time, we investigate through thermal neutron detector measurements, how modern data center construction and cooling systems designs influence the thermal neutron flux and the HPC system fault rates.
+
+\subsection{High Energy and Thermal Neutrons}
+\label{sec_environment}
+
+\textbf{High energy} neutrons, or fast neutrons, are neutrons with energies that range from 1 to over 1,000 MeV are known to disturb the function of electronic devices and are considered a main cause of faults in terrestrial electronic devices~\cite{Baumann2005,ziegler2004ser}. %High energy neutrons primarily interact with silicon chips via elastic scattering which can deposit thousands of electron-Volts (eV, a standard unit of energy used in nuclear physics) of energy into a recoil nuclei. 
+%Neutron scattering may also produced secondary particles such as protons or alphas. All of these processes can free bound electrons in large enough quantities to alter the behavior of the circuits on a chip which may induce faulty behavior in one or more bits. Permanent damage can also occur due to the displacement of atoms within a chip.
+The flux of high energy neutrons in the atmosphere has been thoroughly studied since Hess' discovery~\cite{Hess,Ziegler1996}. The flux is known to vary across the surface, as a consequence of the earth's magnetic field, and increases exponentially with altitude, reaching a maximum at about 60,000 ft. Under normal solar conditions, the fast neutron flux is almost constant for a given latitude, longitude, and altitude. 
+
+\textbf{Thermal} neutrons, or slow neutrons, are low energy neutrons (lower than 0.5 eV), produced by the moderation of high energy neutrons in materials or the emission of neutrons from nuclear decay. 
+%Incident high energy neutrons rain down as part of cosmic ray induced showers reaching thermal energies after 10-20 interactions. %Thermal neutrons continue moving until they are either absorbed in a nuclear reaction, or decay (whilst stable in atomic nuclei, free neutrons have a half-life of about 10 minutes).
+%When a thermal neutron is absorbed by $^{10}B$,  the resulting isotope decays, producing a Lithium isotope and an alpha particle. Both the Lithium isotope and alpha particle can induce faults. The amount of boron in a particular computing device is proprietary information that is not disclosed by industry. The only definitive way to evaluate the thermal neutron sensitivity of a device is to expose it to thermal neutrons. 
+%
+The flux of thermal neutrons, in contrast to high energy neutrons, can be difficult to predict as it strongly depends on the environmental conditions as well the presence of other materials (primarily hydrogen containing) in the device's immediate surroundings (like concrete, water, a fuel tank, etc..) in addition to latitude, longitude, and altitude. Various authors have made calculations to evaluate thermal fluxes in realistic cases~\cite{ziegler2003, hands2011single, baumannsoft, sheu2003cosmic}. As a result, when predicting the error rate caused by thermal neutrons, it is essential to measure rates in realistic settings. 
+
+We have built and deployed a neutron detector in order to have a precise understanding of the thermal neutron flux inside a representative data center. We measured the rates of thermal neutrons in the proximity of water, and demonstrate that cooling water, for instance, can increase the thermal neutron flux (and thus error rate) by up to 20\%. %In Section~\ref{sec_fit} we estimate the high energy vs. thermal neutrons error rate for two locations with known neutron fluxes and discuss the effects of environmental conditions (sunny and rainy day) and surrounding materials (concrete slab floors).
+
+
+\subsection{Supercomputer Cooling}
+\label{sec_cooling}
+
+One of the main challenges in designing HPC systems is the dissipation of heat. A modern supercomputer can push more than 750 watts per square foot which can easily overwhelm traditional cooling systems~\cite{patterson2008state}.
+%The power and heat density in a single rack of current supercomputers demands
+%efficient and reliable cooling techniques to keep the components at
+%operational temperatures.
+%Today's supercomputers consist of hundreds of computing racks (e.g., Summit uses 256 racks~\cite{summit-overview}), requiring specific room
+%designs to optimize both cooling efficiency and ease of maintenance. 
+%Hot/cold air segregation and raised floors are the most common design strategies 
+%for new supercomputers~\cite{patterson2008state}.
+%
+%Air segregation for hot and cold air aisles may require nonstructural walls
+%added to the building to make the physical segregation of the aisles. These
+%additional walls and the structural ones, as demonstrated in
+%Section~\ref{sec_fit}, act as a moderator for neutrons energy and, thus,
+%increase the thermal neutron flux. Similarly, raised floors, designed to
+%increase the flexibility for routing liquids, power and network, may also
+%collaborate to increase the thermal neutron flux as their structure requires
+%additional concrete.
+%
+One notable and growing trend in data centers is the use of 
+liquid cooling~\cite{capozzoli2015cooling}. Eight of today's Top10
+supercomputers use some form of liquid cooling~\cite{Dongarra2013}. 
+These surrounding materials, as demonstrated in Section~\ref{sec_fit}, act as a moderator for neutrons energy and, thus, increase the thermal neutron flux.
+%Liquid cooling is more efficient at heat removal than traditional air cooling and using it 
+%allows for an overall increase in performance and power efficiency.
+%Traditional data
+%centers may use 25\% to 35\% of their energy budget just for cooling. IBM
+%chiller-less water cooling systems have been shown to reduce the cooling energy
+%overhead to just 3.5\%~\cite{gao2015experimental}. IBM has noted that using liquid 
+%cooling in can allow for a 34\% increase in processor frequency which can increase system performance by approximately
+% 33\% ~\cite{ellsworth2008evolution,ellsworth2012overview}. 
+

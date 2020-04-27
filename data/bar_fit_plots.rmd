@@ -1,0 +1,76 @@
+---
+title: "DSN 2019 Cross Sections"
+author: "Daniel"
+date: "April 04, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading data and libraries
+
+Load ggplot2 for plotting data and the CSV file with all data. We also correct the cross section of thermals since the rotax spectrum is different, which means we should correct the fluence we had before by a factor of (4.96/2.71). Thus, we divide the cross section by this factor since the cross section is (number of errors)/(fluence).
+
+```{r}
+library(ggplot2)
+library(reshape2)
+
+dat = read.csv("data_formatted.csv",sep=",")
+
+dat$cross_section_SDC_thermals = dat$cross_section_SDC_thermals / (4.96/2.71)
+
+summary(dat)
+```
+
+
+## Normalize SDC and DUE Cross Sections
+
+Find the minimum value for each device and normalize SDC and DUE cross sections. Then, append the values normalize to a new data frame called "datNormalized"
+
+```{r}
+datNormalized = dat
+for (board in unique(dat$Device)) {
+  # Get all cross section values for one device
+  tmp_values = c(subset(dat,dat$Device==board)$cross_section_SDC_high, subset(dat,dat$Device==board)$cross_section_DUE_high, subset(dat,dat$Device==board)$cross_section_SDC_thermals, subset(dat,dat$Device==board)$cross_section_DUE_thermals)
+  tmp_values = tmp_values[tmp_values > 0] # remove zeros in case there is zeros
+  tmp_min = min(tmp_values, na.rm=TRUE) # get the minimum cross section value
+  print(paste("Device: ", board, "; Minimum: ",tmp_min))
+  
+  # Normalize all date from one device to the minimum value found
+  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_high / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_high / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_SDC_thermals / tmp_min
+  datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals = datNormalized[datNormalized$Device == board, ]$cross_section_DUE_thermals / tmp_min
+}
+
+```
+
+## Calculate the average cross section per device
+
+```{r}
+high_energy_flux = 13
+thermal_flux_best_case = 4 * 1.05 # 5% as measured by Ziegler on top of a concrete rooftop
+thermal_flux_worst_case = 4 * 1.2 # above a concrete parking lot as measured by Ziegler
+thunderstorm_flux = 8
+
+dat_mean = aggregate(datNormalized[, c('cross_section_SDC_high', 'cross_section_DUE_high', 'cross_section_SDC_thermals', 'cross_section_DUE_thermals')], list(datNormalized$Device), mean, na.rm=TRUE,na.action = na.omit)
+dat_mean$SDC_FIT_high = dat_mean$cross_section_SDC_high * high_energy_flux
+dat_mean$SDC_FIT_thermals_best = dat_mean$cross_section_SDC_thermals * thermal_flux_best_case
+dat_mean$SDC_FIT_thermals_worst = dat_mean$cross_section_SDC_thermals * thermal_flux_worst_case
+dat_mean$SDC_FIT_thunderstorm = dat_mean$cross_section_SDC_thermals * thunderstorm_flux
+dat_mean$high_thunder_diff = dat_mean$SDC_FIT_high/dat_mean$SDC_FIT_thunderstorm
+#dat_mean
+dat_melted = melt(dat_mean[,c('Group.1', 'SDC_FIT_high', 'SDC_FIT_thermals_best', 'SDC_FIT_thermals_worst', 'SDC_FIT_thunderstorm')], id.vars = 'Group.1', )
+
+ggplot(dat_melted) +
+  geom_bar(stat="identity",aes(x = variable, y = value, fill=variable), position=position_dodge()) +
+  labs(x = "???", y = "Average FIT Rate [a.u.]") +
+  facet_wrap(~Group.1, scales = "free_y") +
+  theme(legend.title = element_blank(), legend.position="bottom",axis.text.x=element_text(size=14) , axis.text.y=element_text(size=14) , text = element_text(size = 14), legend.key.width=unit(1.1, "cm"))
+
+
+```
+
+

@@ -1,0 +1,109 @@
+%\documentclass{sig-alternate}
+%\setlength{\paperheight}{11in}
+%\setlength{\paperwidth}{8.5in}
+
+
+\documentclass[journal]{IEEEtran}
+
+
+\newcommand{\ignore}[1]{}
+\usepackage[pass]{geometry}
+\usepackage{fancyhdr}
+\usepackage[normalem]{ulem}
+\usepackage[hyphens]{url}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{soul}
+\usepackage{enumitem}
+
+
+%%%%%%%%%%%---SETME-----%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sethlcolor{white}
+
+% When sethlcolor is white, your highlights will not show up.  Use
+% \sethlcolor{white} to submit your paper pdf.  When compiling your second
+% pdf with highlighted changes, simply remove \sethlcolor{white} and add your
+% optional 100-word appendix.
+% Use \hl{ ... } to highlight any text.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{flushend}
+\usepackage{multirow}
+
+% Nathan - TodoNotes
+%\usepackage[disable]{todonotes}
+% ^^^ uncomment the above line to disable todonotes, this will
+%     disable the TODO blocks in the document
+\usepackage{todonotes}
+
+\usepackage{textcomp} % \textdegree
+\usepackage{subcaption}
+
+
+%commands
+\newcommand{\doing}[1]{{\leavevmode\color{green}[#1]}}
+
+% Nathan - commenting out this 'todo' section below because it conflicts
+% with todonotes, hope that's OK :(
+% \newcommand\todo[1]{\textcolor{red}{#1}}
+
+\renewcommand\todo[1]{\textcolor{red}{#1}}
+
+
+\begin{document}
+
+\title{Thermal Neutrons: a Possible Threat for Supercomputers and Safety Critical Applications}
+\author{
+    \IEEEauthorblockN{
+        Daniel Oliveira,
+        Sean Blanchard,
+        Nathan DeBardeleben,
+        Fernando F. dos Santos,
+        Gabriel Piscoya D\'avila,\\
+        Philippe Navaux,
+%        Andrea Favalli,
+%        Opale Schappert,
+        Stephen Wender,
+        Carlo Cazzaniga,
+        Christopher Frost,
+        Robert C. Baumann, %Fellow, IEEE, and
+        Paolo Rech
+                  }
+}
+
+\maketitle
+
+\begin{abstract}
+\input{src/abstract}
+\end{abstract}
+
+
+%\keywords{Supercomputer, HPC, Radiation, Thermal neutrons, Resilience}
+
+
+\input{src/introduction}
+\input{src/background}
+%\input{src/related}
+\input{src/methodology}
+%\input{src/memories}
+\input{src/cross-section-results}
+\input{src/fit-results}
+\input{src/conclusion}
+
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{ref}
+
+
+\end{document}
+
+

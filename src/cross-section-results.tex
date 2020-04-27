@@ -1,0 +1,71 @@
+\begin{figure*}[tbh]
+	\centering
+	\includegraphics[width=0.81\textwidth]{./data/plots_final/cs_xeon_gpus_avg.png}
+	\caption{High energy and thermal neutrons normalized cross sections for Xeon Phi and GPUs.}
+	\label{cs_xeon_gpus}
+\end{figure*}
+
+\begin{figure*}[th]
+	\centering
+	\includegraphics[width=0.75\textwidth]{./data/plots_final/cs_APU_FPGA_avg.png}
+	\caption{High energy and thermal neutrons normalized cross sections for AMD APU and FPGA.}
+	\label{cs_apu_fpga}
+\end{figure*}
+
+\section{Cross Section Results}
+\label{sec_results}
+
+In this section, we compare the cross section measured at ChipIR and ROTAX for the tested devices and codes with the methodology described in Section~\ref{sub_beam_setup}. We emphasize that we used exactly the same device and setup for both ChipIR and ROTAX experiments. %Due to beam time limitations (mainly at ROTAX as we must test only one device at a time) we could not test all the benchmarks in each device.
+%Recall that a higher cross section indicates a higher probability of a single (high energy or thermal) neutron inducing faults. To evaluate the impact of thermal vs. high energy neutrons on the device error rate we need to consider the natural background flux, which is done in Section~\ref{sec_fit}.
+As we show, the cross section to thermal neutrons is far from being negligible, indicating the presence of $^{10}B$ in the silicon doping. Reported data have been normalized to the lowest cross section for each vendor to prevent the leakage of business-sensitive data while allowing a direct comparison between codes and devices of the same vendor. We also report error bars considering Poisson's 95\% confidence interval.
+
+Figure~\ref{cs_xeon_gpus} shows the \textbf{Xeon Phi} SDC and DUE cross sections for high energy and thermal neutrons. On  average the thermal neutrons cross section is much lower ($1/20$) than the high energy neutrons' one, for both SDC and DUE.
+This low sensitivity to thermal neutrons is a sign that either little boron is used in the production of Xeon Phi or depleted boron is used.
+%HotSpot is the most sensitive code for both
+%SDCs and DUEs. HotSpot is especially sensitive to DUEs, with a cross section
+%more than $2\times$ higher than the average for both high energy and thermal
+%neutrons. HotSpot, in contrast to the other codes, uses a high number of
+%control flow statements and has low arithmetic intensity, increasing the
+%sensitivity to DUEs. 
+
+
+For SDCs, the high energy neutron cross sections vary significantly depending on the code being executed (more than 2x across codes), which is in accordance with previous work~\cite{sc2017, fratin2018DSN}. The SDC cross sections for thermal neutrons, however, have a very low variation between codes (less than 20\%) which may be an artifact of the low number of SDCs observed. This result suggests there is a negligible sensitivity to thermals in the  chip resources that are responsible for the variation between error rates in the high energy SDC results.
+DUEs, on the other hand, have a similar trend for high energy and thermal neutrons. %DUE faults induced by thermal neutrons seem to have similar effects to DUE faults induced by high energy neutrons. 
+
+Figure~\ref{cs_xeon_gpus} shows the sensitivity of \textbf{NVIDIA GPUs} to thermal and high energy neutrons.
+For the K20, on the average, both the SDCs and DUEs thermal cross sections are very high, being 60\% and 50\% of the high energy neutrons ones. This indicates the presence of a significant amount of $^{10}B$ in the manufacturing process. The thermal neutrons SDC cross section trend across codes is also similar to the high energy neutrons one, in the sense that the code with the largest thermal neutrons cross section (i.e., HotSpot) is also the code with the largest high energy neutron cross section. This suggests that $^{10}B$ is present in the computing resources and memory of these devices, and that the fault locations are similar for both kind of neutrons. 
+%
+It is also interesting to notice that YOLOv2 is the only code for which DUEs are more likely than SDCs, for both kind of neutrons. This result follows previous work that shows low SDC sensitivity in CNN based object detection~\cite{ffsantos2018}. %As shown in Figure~\ref{cs_xeon_gpus}, YOLOv2 DUE cross section for thermal neutrons is more than 50\% higher than the DUE cross section for high energy neutrons and more than $2\times$ higher than the average of all K20 codes. This cross section indicates that the reliability for YOLOv2 in environments where thermal neutron flux is significant will be much worse than expected, especially for a safety-critical application like self-driven cars.
+
+For Titan X and Titan V, on the average, the thermal neutron cross section is an order of magnitude lower than the high energy one. The impact of thermal neutrons is lower for the newest GPUs than on the mature K20. This may imply that
+FinFET based GPUs are less susceptible to thermal neutrons than CMOS GPUs (K20 is built using CMOS planar transistors, Titan X and Titan V using FinFET). However, for the MxM tests, Titan V
+($12nm$) shows an almost doubled thermal neutron SDC cross section compared to
+the Titan X ($16nm$). Unfortunately, we were not able to test more codes on
+the Titan V to confirm if the increased thermal neutron cross section is intrinsic of smaller FinFET technologies.
+
+
+The \textbf{AMD APU} cross sections are shown in Figure~\ref{cs_apu_fpga}. As described in Section~\ref{subsec_devices}, the APU embeds a GPU and a CPU. We test the three heterogeneous codes described in Section~\ref{subsec_codes} (CED, SC, and BFS) as executed on the GPU only, on the CPU only, and distributing concurrently 50\% of the workload to the CPU and 50\% to the GPU (CPU+GPU).
+
+The APU-GPU, APU-CPU, and CPU+GPU SDC cross section for both thermals and high energy neutrons vary of more than an order of magnitude, forcing the use of logarithmic scale for APU data in Figure~\ref{cs_apu_fpga}. The reported data shows that, on the average, the thermal neutrons cross section is  between $1/4$ and $1/5$ the high energy neutron's, for CPU, GPU, and CPU+GPU.
+All APU configurations, on average, are more sensitive to SDCs than DUEs. It is also worth noting that the APU-CPU has, on average, a higher SDC sensitivity than APU-GPU. This is in accordance with previous work that shows a much lower probability for a fault in the AMD GPU to impact the application output than a fault in the CPU~\cite{Jeon2013ArchitecturalVM}. %Additionally, in the APU, the GPU has a significantly smaller physical area than the CPU which reduces the probability of a neutron striking it and causing corruption.
+
+%A specific result to highlight is that SC code, which is the only memory-bound
+%code of the three we test on the APU, has an SDC sensitivity to both high energy and thermal
+%neutron extremely high when compared to others. As already shown, when the device is in idle waiting for data to be fetch from memory, registers and caches are exposed to radiation and store critical data~\cite{fratin2018DSN}. Moreover, as observed for the Xeon Phi,
+%the DUE cross section variation across different codes is much smaller than SDC variation. 
+%Finally, BFS has a particularly high DUEs sensitivity when
+%the GPU is involved in computation (APU-GPU and CPU+GPU). This DUE increase is likely caused by the
+%much higher stress in the CPU-GPU synchronization that BFS imposes by launching several GPU kernels~(refer to section~\ref{subsec_codes}).
+
+Figure~\ref{cs_apu_fpga} shows \textbf{Xilinx FPGA} SDC cross section when executing the MNIST CNN. It is worth noting that neutron-induced errors in the configuration memory of SRAM FPGAs have a \textit{persistent} effect, in the sense that a corruption changes the implemented circuit until a new bitstream is loaded in the device. The observation of an error at the FPGA output indicates that the bitstream has probably been corrupted. 
+We reprogram the FPGA at each observed output error to avoid the collection of a stream of corrupted data, making the observation of DUEs very rare. In fact, as FPGA executes operation without any operating system, interfaces, or control-flow involved, a considerable amount of errors would need to accumulate in the configuration memory to have the circuit functionality compromised. We never observed a DUE in FPGAs during our experimental campaign.
+
+We have tested two different versions of the neural network, one using double and the other using single precision floating-point arithmetic. When comparing the high energy and thermal neutrons cross sections for the two configurations, we can clearly perceive that the Xilinx FPGA is more sensitive to high energy neutrons. However, the thermal neutrons cross section is far from being negligible.
+
+The double precision version takes about twice as many resources to be implemented in the FPGA. As the neutrons cross section is directly related to the circuit's area, the cross section is expected to be higher for the double version of MNIST. Experimental results for both high energy and thermal neutrons confirm this intuition. The thermal neutrons cross section for the double version is particularly higher than the single one, being almost four times larger.
+
+Our results show that different codes executed on the same device can have very different high energy vs thermal neutrons sensitivities. 
+The physical interaction of a thermal neutron and, consequently, the resulting fault model (i.e., the way the physical fault is manifested at circuit level) and the impact on the code execution is highly different from the high energy neutron one. 
+%High energy neutrons can interact with any atom in the chip or package material, triggering a reaction that may potentially reach a transistor's vulnerable area. The fault can happen some distance from the high energy neutron impact, and the particles resulting from the interaction can travel in different directions~\cite{Baumann2005}. Thermal neutrons, on the other hand, interacting only with  $^{10}B$, produce an alpha particle and lithium recoil that have very short ranges. When a thermal neutron is absorbed in virtually all other materials used in semiconductor manufacturing, the resulting nuclei typically only produces  gamma rays, which do not produce bit flips. 
+Software fault-injection can emulate predefined fault models and study their effects, but cannot be used to study the fault manifestation nor to define different fault models. One way to investigate the different fault models would be to simulate the physical implementation of a transistor in a given technology and observe the effect of neutron strikes at different energies~\cite{Dodd2005}. However, transistor implementation details are not available for COTS devices, which makes the comparison of the beam experiment cross sections of various codes the only possible way to highlight code-dependent thermal vs high energy neutrons induced error rates.
+
