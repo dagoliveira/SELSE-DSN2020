@@ -1,6 +1,13 @@
 \section{Background and Related Works}
 \label{sec_background}
 
+\begin{figure*}[th]
+	\centering
+	\includegraphics[width=0.75\textwidth]{./figs/motivation.png}
+	\caption{High energy and thermal neutrons normalized cross sections for AMD APU and FPGA.}
+	\label{motivation}
+\end{figure*}
+
 %This section serves as a background and related works on high energy and thermal neutrons effects on computing devices. 
 %
 %\subsection{Motivation}
@@ -63,4 +70,21 @@ These surrounding materials, as demonstrated in Section~\ref{sec_fit}, act as a 
 %overhead to just 3.5\%~\cite{gao2015experimental}. IBM has noted that using liquid 
 %cooling in can allow for a 34\% increase in processor frequency which can increase system performance by approximately
 % 33\% ~\cite{ellsworth2008evolution,ellsworth2012overview}. 
+
+\subsection{Motivation}
+\label{sec_mot}
+
+As mentioned, it is mainly the presence of $^{10}B$ in the manufacturing process that makes a device susceptible to thermal neutrons~\cite{wen2010b10}. Reducing the amount of $^{10}B$ could reduce the sensitivity of the device to thermal neutrons accordingly and using purified Boron would making the device immune to thermal neutrons induced effect.
+
+Nevertheless, the use of purified Boron increases the manufacturing process and, thus, the final product cost. Such an increased cost is unjustified for consumer electronics, as the (high energy or thermal) neutrons error rate is sufficiently low not to be considered a major concern for user applications (video editing, gaming, etc...). Having a more expensive product to ensure high reliability is not appealing for the costumer and manufacturers are investing in improving performances and efficiency as well as in improving the yield. 
+
+Lately, applications for which reliability is indeed a major concern, as cloud computing, High Performance Computing, and automotive applications, have started to be powered by COTS devices. The choice of using COTS in these applications is dictated by the need of extremely high computational requirements with low power budget. The automotive market is a corner case. To implement an autonomous vehicle it is necessary to detect objects in real time, and this is normally achieved though Convolutional Neural Networks (CNNs) that are very computational demanding. Moreover, high computational efficiency is preferred in order not to exceed the vehicle power budget. Finally, the manufacturing cost is a highly sensible variable as the automotive market is highly competitive. As a result, the device selected to execute CNNs for autonomous vehicle must be efficient, with high performances, and low-cost as a COTS device. Nevertheless, reliability must be paramount, and this must include the thermal neutron component.
+
+Figure~\ref{motivation} shows an abstract view of the current COTS devices market situation. There are various computing architectures available in the market, from low power ARM embedded processors to high end CPU, accelerators as co-processors or GPUs, and programmable or application-specific devices (FPGAs or ASICs). Each of these devices has its own computing characteristics and cost. Most producers are willing to increase the yield by adopting the same architecture for various application domains, from consumer electronic, to cloud serves, HPC, and autonomous vehicles. Nevertheless, the strategy works only if the COTS device reliability is carefully evaluated and found to be sufficient for the project requirements. 
+
+$^{10}B$, which is the main topic of this paper, is one of the main variables in the reliability evaluation of COTS devices. As said, manufacturers do not have interest in using the more expensive purified Boron for their devices as this could put them in a weaker market position and reduce their yield. On the other hand, when the COTS device is employed as part of a project that has high reliability requirements it is mandatory to evaluate also its thermal neutrons induced error rate. We cannot assume that a device that was not produced to be highly reliable is $^{10}B$ free.
+
+As mentioned, the second very important aspect of thermal neutrons reliability evaluation, besides the presence of $^{10}B$ and the device sensitivity to thermal neutrons, is the thermal neutron flux. While the high-energy neutrons flux has been extensively studied and is assumed to be relatively constant (but dependent on the location), the thermal-neutrons flux is extremely variable. Humidity, location, materials in proximity of the computing device (such as water, wood, concrete, gasoline, etc..) are among the several factors that can significantly modify the thermal neuron flux and, then, the final FIT rate of the COTS device. As an example, when it rains the error rate of a device detecting objects in a car can be significantly higher than during a sunny day, in a supercomputer devices placed close to the water-cooling pipes can experience a higher fault rate than other nodes, etc. It is the goal of this paper to understand also the variability of the error rate of devices based on some of these variables.
+
+
 
