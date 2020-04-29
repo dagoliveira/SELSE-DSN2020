@@ -180,44 +180,10 @@ H.~Tietze, W.~Schmidt, and R.~Geick, ``Rotax, a spectrometer for coherent
   neutron inelastic scattering at isis,'' \emph{Physica B: Condensed Matter},
   vol. 156, pp. 550--553, 1989.
 
-\bibitem{sc2017}
-\BIBentryALTinterwordspacing
-D.~Oliveira, L.~Pilla, N.~DeBardeleben, S.~Blanchard, H.~Quinn, I.~Koren,
-  P.~Navaux, and P.~Rech, ``Experimental and analytical study of xeon phi
-  reliability,'' in \emph{Proceedings of the International Conference for High
-  Performance Computing, Networking, Storage and Analysis}, ser. SC '17.\hskip
-  1em plus 0.5em minus 0.4em\relax New York, NY, USA: ACM, 2017, pp.
-  28:1--28:12. [Online]. Available:
-  \url{http://doi.acm.org/10.1145/3126908.3126960}
-\BIBentrySTDinterwordspacing
-
-\bibitem{fratin2018DSN}
-V.~Fratin, D.~Oliveira, C.~Lunardi, F.~Santos, G.~Rodrigues, and P.~Rech,
-  ``Code-dependent and architecture-dependent reliability behaviors,'' in
-  \emph{2018 48th Annual IEEE/IFIP International Conference on Dependable
-  Systems and Networks (DSN)}, IEEE.\hskip 1em plus 0.5em minus 0.4em\relax
-  IEEE, 2018, pp. 13--26.
-
-\bibitem{ffsantos2018}
-F.~F. d.~{Santos}, P.~F. {Pimenta}, C.~{Lunardi}, L.~{Draghetti}, L.~{Carro},
-  D.~{Kaeli}, and P.~{Rech}, ``Analyzing and increasing the reliability of
-  convolutional neural networks on gpus,'' \emph{IEEE Transactions on
-  Reliability}, vol.~68, no.~2, pp. 663--677, June 2019.
-
-\bibitem{Jeon2013ArchitecturalVM}
-H.~Jeon, M.~Wilkening, V.~Sridharan, S.~Gurumurthi, and G.~H. Loh,
-  ``Architectural vulnerability modeling and analysis of integrated graphics
-  processors,'' in \emph{IEEE 10th Workshop on Silicon Errors in Logic - System
-  Effects (SELSE)}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE, 2013.
-
-\bibitem{Dodd2005}
-P.~E. {Dodd}, ``Physics-based simulation of single-event effects,'' \emph{IEEE
-  Transactions on Device and Materials Reliability}, vol.~5, no.~3, pp.
-  343--357, Sep. 2005.
-
-\bibitem{leo2012techniques}
-W.~R. Leo, \emph{Techniques for nuclear and particle physics experiments: a
-  how-to approach}.\hskip 1em plus 0.5em minus 0.4em\relax Springer Science \&
-  Business Media, 2012.
+\bibitem{jsc2020}
+D.~Oliveira, S.~Blanchard, N.~DeBardeleben, F.~F. dos Santos, G.~P. Davila,
+  P.~Navaux, A.~Favalli, O.~Schappert, S.~Wender, C.~Cazzaniga, C.~Frost, and
+  P.~Rech, ``Thermal neutrons: a possible threat for supercomputer
+  reliability.''\hskip 1em plus 0.5em minus 0.4em\relax Springer, 2020.
 
 \end{thebibliography}

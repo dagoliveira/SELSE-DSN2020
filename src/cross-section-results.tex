@@ -12,28 +12,37 @@
 %	\label{cs_apu_fpga}
 %\end{figure*}
 
-\begin{figure*}[th]
-	\centering
-	\includegraphics[width=0.85\textwidth]{./figs/cross_section_ratio.pdf}
-	\caption{Average cross section ratio for all devices.}
-	\label{cs_ratio}
-\end{figure*}
-
 \section{Cross Section Results}
 \label{sec_results}
 
-In this section, we show the average cross sections results from ChipIR and ROTAX experiments. It is important to note that we used the same device and setup for both experiments. As we show, the thermal neutrons cross section is far from being negligible, which indicates the presence of $^{10}B$ in the silicon doping.
 
-Figure~\ref{cs_ratio} compares the sensitivity of high energy and thermal neutron cross sections. We divide the high energy cross section by the thermal neutron one, to provide the ratio between the cross sections. In other words, a cross section ratio close to one implies that the thermal neutron cross section is highly significant.
+In this section, we show the average cross sections results from ChipIR and ROTAX experiments. The detailed results are presented in~\cite{jsc2020}. It is important to note that we used the same device and setup for both experiments. As we show, the thermal neutrons cross section is far from being negligible, which indicates the presence of $^{10}B$ in the silicon doping.
+
+Figure~\ref{cs_ratio} compares the sensitivity of high energy and thermal neutron cross sections. We divide the high energy cross section by the thermal neutron one, to provide the ratio between the cross sections. In other words, a cross section ratio of one implies that a device is as sensitive to thermal neutrons as to high energy ones.
+
+%\begin{figure*}[th]
+%	\centering
+%	\includegraphics[width=0.5\textwidth]{./figs/cross_section_ratio.pdf}
+%	\caption{Average cross section ratio for all devices.}
+%	\label{cs_ratio}
+%\end{figure*}
+\begin{figure}[th]
+	\centering
+	\includegraphics[width=1.0\columnwidth]{./figs/cross_section_ratio.pdf}
+	\caption{Average cross section ratio for all devices.}
+	\label{cs_ratio}
+\end{figure}
+
 
 For \textbf{Xeon Phi}, the ratio is 10.14x for SDCs and 6.37x for DUEs as shown in Figure~\ref{cs_ratio}. Thus, for each SDC caused by thermal neutrons, we have about 10 SDCs caused by high energy ones. This low sensitivity to thermal neutrons indicates that Xeon Phi uses little or depleted boron in the manufacturing of the devices.
 
-\textbf{NVIDIA GPUs} SDC ratio is about 2x to 3x for K20 and TitanX, respectively. For DUE, the difference is even more substantial,  with K20 presenting a ration of 3x while TitanX has a ratio of 7x. TitanX is manufactured using FinFET, while K20 still uses CMOS planar transistors, which may indicate that FinFET devices are less susceptible to thermal neutrons than CMOS ones.
+\textbf{NVIDIA GPUs} SDC ratio is about 2x to 3x for K20 and TitanX, respectively. For DUE, the difference is more substantial, with K20 presenting a ration of 3x while TitanX has a ratio of 7x. TitanX is manufactured using FinFET, while K20 still uses CMOS planar transistors, which may indicate that FinFET devices are less susceptible to thermal neutrons than CMOS ones.
 
-As described in Section~\ref{subsec_devices}, the APU embeds a GPU and a CPU. We test the heterogeneous codes as executed on the GPU only, on the CPU only, and distributing concurrently 50\% of the workload to the CPU and 50\% to the GPU (CPU+GPU). The \textbf{AMD APU}, as shown in Figure~\ref{cs_ratio}, has a SDC ratio similar to NVIDIA GPUs and a DUE ratio much worse. It is worth noting that when GPU is active, the DUE is even worse and about 1.18x for CPU+GPU. This GPU sensitivity to DUE may indicate that the mechanism responsible for communication and synchronism between CPU and GPU is particularly sensitive to thermal neutrons.
+As described in Section~\ref{subsec_devices}, the APU embeds a GPU and a CPU. We test the heterogeneous codes as executed on the GPU only, on the CPU only, and distributing concurrently 50\% of the workload to the CPU and 50\% to the GPU (CPU+GPU). The \textbf{AMD APU}, as shown in Figure~\ref{cs_ratio}, has a SDC ratio similar to NVIDIA GPUs and a much worse DUE ratio. It is worth noting that when GPU is active, the DUE is even worse and about 1.18x for CPU+GPU. This GPU sensitivity to DUE may indicate that the mechanism responsible for communication and synchronism between CPU and GPU is particularly sensitive to thermal neutrons.
 
-Finally, for \textbf{FPGA}, the SDC cross section ratio is 2.33x indicating one thermal neutron SDC for every two high energy SDCs. Thus, similar to NVIDIA GPUs and AMD APU, the thermal neutron sensitivity is far from negligible and should not be neglected.
+Finally, for \textbf{FPGA}, the SDC cross section ratio is 2.33x, indicating that for each thermal neutron SDC we observe about two high energy SDCs. Thus, similar to NVIDIA GPUs and AMD APU, the thermal neutron sensitivity is far from negligible and should not be neglected.
 It is worth noting that neutron-induced errors in the configuration memory of SRAM FPGAs have a \textit{persistent} effect, in the sense that a corruption changes the implemented circuit until a new bitstream is loaded in the device. The observation of an error at the FPGA output indicates that the bitstream has probably been corrupted. 
+
 
 %We reprogram the FPGA at each observed output error to avoid the collection of a stream of corrupted data, making the observation of DUEs very rare.
 %In this section, we compare the cross section measured at ChipIR and ROTAX for the tested devices and codes with the methodology described in Section~\ref{sub_beam_setup}. We emphasize that we used exactly the same device and setup for both ChipIR and ROTAX experiments. As we show, the cross section to thermal neutrons is far from being negligible, indicating the presence of $^{10}B$ in the silicon doping. Reported data have been normalized to the lowest cross section for each vendor to prevent the leakage of business-sensitive data while allowing a direct comparison between codes and devices of the same vendor. We also report error bars considering Poisson's 95\% confidence interval.
