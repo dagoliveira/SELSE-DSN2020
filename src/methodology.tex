@@ -1,26 +1,26 @@
 \section{Methodology}
 \label{sec_methodology}
 
-In this section, we present the experimental methodology to evaluate the thermal and high energy neutrons' contribution to the error rate of devices.
-We describe the radiation experiments as well as the modern computing devices selected and the codes executed.
+In this section, we present the experimental methodology that should be used to measure the sensitivity of electronic devices to thermal and high energy neutrons. We describe the available neutron sources as well as the computing devices selected and the codes executed.
 
 \subsection{Devices}
 \label{subsec_devices}
 
-For this work, we use six devices in order to evaluate different technologies and vendors. The devices selected are also used in all the different domains described in Section~\ref{sec_mot}. For the co-processor, explicitly manufactured for HPC and data centers, we tested an \textbf{Intel Xeon Phi}, built using a $22nm$ Intel's 3-D Tri-gate technology. We also tested two \textbf{NVIDIA GPUs} that are used in all domains: NVIDIA K20 manufactured in a $28nm$ TSMC CMOS technology, NVIDIA TitanX fabricated in a $16nm$ TSMC FinFET technology. An \textbf{AMD Accelerated Processing Unit (APU)}, manufactured in a $28nm$ SHP Bulk Process at Global Foundries is a hybrid device that can also be used in all domains. The APU integrates CPU and GPU in the same chip. Finally, Zynq-7000 is the \textbf{FPGA} tested, fabricated in a $28nm$ TSMC technology.
+To evaluate the sensitivity of thermal and high energy neutrons it is fundamental to test various COTS devices. The devices selected should be used in all the different domains described in Section~\ref{sec_mot}. For the co-processor, explicitly manufactured for HPC and data centers, we tested an \textbf{Intel Xeon Phi}, built using a $22nm$ Intel's 3-D Tri-gate technology. We also tested two \textbf{NVIDIA GPUs} that are used in all domains: NVIDIA K20 manufactured in a $28nm$ TSMC CMOS technology, NVIDIA TitanX fabricated in a $16nm$ TSMC FinFET technology. An \textbf{AMD Accelerated Processing Unit (APU)}, manufactured in a $28nm$ SHP Bulk Process at Global Foundries is a hybrid device that can also be used in all domains. The APU integrates CPU and GPU in the same chip. Finally, Zynq-7000 is the \textbf{FPGA} tested, fabricated in a $28nm$ TSMC technology.
 
 \subsection{Codes}
 \label{subsec_codes}
 
-The code selection needs to consider the selected devices which have a wide range of architectural and computational characteristics. Then, to have a fair evaluation, we selected codes that are efficient for each device, so we can reduce the bias in the reliability evaluation toward devices that are more efficient for the codes.
+The code selection needs to consider the devices in which they are going to be executed. They have a wide range of architectural and computational characteristics. Then, to have a fair evaluation, we selected codes that are efficient for each device, so we can reduce the bias in the reliability evaluation toward devices that are more efficient for the codes.
 
 A matrix multiplication, LUD, LavaMD, and HotSpot were selected for Xeon Phi and GPUs. These codes are highly arithmetic codes that solve linear algebra and finite difference methods, which are executed efficiently in HPC devices. For APU, which is a heterogeneous device, we use SC, CED, and BFS that are made specifically for such devices. Finally, we also tested YOLO and MNIST to represent neural networks. These neural networks were tested in GPUs and FPGAs to evaluate the impact on self-driven vehicles.
 
 \subsection{Radiation Experiments Setup}
 \label{sub_beam_setup}
 
-\todo{listar as facilities}
+The amount of $^{10}B$ involved in the manufacturing process is part of the industry sensitive data and is definitely not publicly available. Actually, the quantity of Boron can even vary from a batch of devices to another. That said, a customer can ask (paying) to the fab to reduce the amount of Boron or to use high quality products to significantly reduced the amount of $^{10}B$. When evaluating the reliability of COTS devices for applications in which reliability matters, thermal neutrons should be considered. Radiation experiments are the only way to evaluate if the device meets the project reliability requirements considering also thermal neutrons. To achieve this evaluation it is necessary to expose the device to both high energy and thermal neutrons, comparing the sensitivity of the device to both kind of neutrons.
 
+There are some facilities that allow to measure the realistic error rates of computing devices to high energy neutrons, such as the Los Alamos National Lab's Los Alamos Neutron Science Center in the US or the ChipIR facility of the Rutherford Appleton Lab in the UK. Thermal neutrons are used for physics of matter studies and there are not dedicated beam line for the test of electronic devices. However, as shown in~\ref{jsc2020}, it is possible to adapt thermal neutrons facilities for the test of computing systems. Reactors, such as the ones available in nuclear power plants, are also excellent controlled sources for thermal neutrons.
 
 \subsection{Thermal Neutrons Detector}
 \label{sub_detector}
